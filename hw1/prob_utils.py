@@ -132,9 +132,11 @@ def generate_random_samples(N, n, pdf_params, visualize=False):
         # z ~ Uniform[-1, 1] ^ n are zero-mean "unit-scale" uniformly distributed samples
         z = 2 * (np.random.rand(n, N) - 0.5)
         # x ~ Uniform(pdf.mean, pdf.scale)
-        x = np.multiply(pdf_params.scale, z) + pdf_params.mean  # Element-wise multiplication
+        x = np.multiply(pdf_params.scale, z) + \
+            pdf_params.mean  # Element-wise multiplication
     else:
-        print("PDF {} does not have a parameters type object!".format(pdf_params.dist_type))
+        print("PDF {} does not have a parameters type object!".format(
+            pdf_params.dist_type))
         return
 
     if visualize and (0 < n <= 3):
