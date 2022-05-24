@@ -173,7 +173,7 @@ def generate_random_samples(N, n, pdf_params, visualize=False):
     return x
 
 
-def generate_mixture_samples(N, n, pdf_params, visualize=False):
+def generate_mixture_samples(N, n, pdf_params: GaussianMixturePDFParameters, visualize=False):
     """ Generates N vector-valued samples with dimensionality n
         according to the mixture PDF specified by pdf_params.
 
