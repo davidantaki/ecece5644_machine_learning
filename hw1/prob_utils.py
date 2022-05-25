@@ -88,7 +88,7 @@ class GaussianMixturePDFParameters(PDFParameters):
         Args:
             priors: Prior likelihoods of each distribution being selected.
             C: Number of mixture components.
-            mean: Each Gaussian's mean vector, of shape [C, n] for n-dimensionality.
+            mean: Each Gaussian's mean vector, of shape [n, C] for n-dimensionality.
             cov: Each Gaussian's covariance matrix, of shape [n, n, C] for n-dimensionality. Note for n = 1,
                 simply variance so shape [1, C].
         """
