@@ -185,6 +185,8 @@ ax_roc.legend()
 ax_roc.set_xlabel(r"Probability of false alarm $P(D=1|L=0)$")
 ax_roc.set_ylabel(r"Probability of correct decision $P(D=1|L=1)$")
 
+print(roc_map)
+print(roc_erm)
 
 plt.grid(True)
 plt.show()
