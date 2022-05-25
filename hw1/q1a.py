@@ -28,13 +28,6 @@ priors = np.array([0.65, 0.35])
 num_classes = len(priors)
 print("num_classes: {}".format(num_classes))
 
-# Gaussian distributions means
-# mu = np.array([[-0.5, -0.5, -0.5],
-#                [1, 1, 1]])
-# mu = np.array([[-0.5, -0.5, -0.5],
-#                [1, 1, 1],
-#                [0, 0, 0]])
-
 
 # As per what Prof. Mark said, "mean" matrix parameter to GaussianMixturePDFParameters
 # needs to be of shape [dimensions, components] instead of [components, dimensions].
