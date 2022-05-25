@@ -28,8 +28,17 @@ num_classes = len(priors)
 print("num_classes: {}".format(num_classes))
 
 # Gaussian distributions means
-mu = np.array([[-0.5, -0.5, -0.5],
-               [1, 1, 1]])
+# mu = np.array([[-0.5, -0.5, -0.5],
+#                [1, 1, 1]])
+# mu = np.array([[-0.5, -0.5, -0.5],
+#                [1, 1, 1],
+#                [0, 0, 0]])
+
+
+# As per what Prof. Mark said, "mean" matrix parameter to GaussianMixturePDFParameters
+# needs to be of shape [dimensions, components] instead of [components, dimensions].
+mu = np.array([[-0.5, 1], [-0.5, 1], [-0.5, 1]])
+print(mu.shape)
 
 # Gaussian distributions covariance matrices
 Sigma = np.array([[[1, -0.5, 0.3],
@@ -40,7 +49,7 @@ Sigma = np.array([[[1, -0.5, 0.3],
                    [-0.2, 0.3, 1]]])
 
 # Determine dimensionality from mixture PDF parameters
-dimensions = mu.shape[1]
+dimensions = mu.shape[0]
 print("dimensions: {}".format(dimensions))
 
 # Create PDF parameter structure
@@ -48,8 +57,24 @@ gmm_params = prob_utils.GaussianMixturePDFParameters(
     priors, num_classes, mu, np.transpose(Sigma))
 gmm_params.print_pdf_params()
 
+print(gmm_params.component_pdfs[0].mean.shape)
+
+# Output samples and labels
+X = np.zeros([num_samples, dimensions])
+sample_labels = np.zeros(num_samples)
+# print("labels: {}".format(sample_labels))
+
 # Generate 3D matrix from a mixture of 3 Gaussians
-_, _ = prob_utils.generate_mixture_samples(num_samples, dimensions, gmm_params, True)
+X, sample_labels = prob_utils.generate_mixture_samples(
+    num_samples, dimensions, gmm_params, True)
+
+
+possible_labels = np.array([0, 1])
+
+# Actual number of samples generated from each class
+Nl = np.array([sum(sample_labels == l) for l in possible_labels])
+print("Number of samples from Class 0: {:d}, Class 1: {:d}".format(
+    Nl[0], Nl[1]))
 
 # # Output samples and labels
 # X = np.zeros([num_samples, dimensions])
