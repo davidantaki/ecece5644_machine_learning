@@ -37,11 +37,11 @@ print(mu.shape)
 
 # Gaussian distributions covariance matrices
 Sigma = np.array([[[1, 0, 0],
-                   [0, 1, 0],
-                   [0, 0, 1]],
-                  [[1, 0, 0],
-                   [0, 1, 0],
-                   [0, 0, 1]]])
+                [0, 1, 0],
+                [0, 0, 1]],
+                [[1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1]]])
 
 # Determine dimensionality from mixture PDF parameters
 dimensions = mu.shape[0]
@@ -126,13 +126,13 @@ print(X.shape)
 print(ind_00_map)
 X_transpose = np.transpose(X)
 plt.plot(X_transpose[ind_00_map, 0],
-         X_transpose[ind_00_map, 1], 'og', label="Correct Class 0")
+        X_transpose[ind_00_map, 1], 'og', label="Correct Class 0")
 plt.plot(X_transpose[ind_10_map, 0],
-         X_transpose[ind_10_map, 1], 'or', label="Incorrect Class 0")
+        X_transpose[ind_10_map, 1], 'or', label="Incorrect Class 0")
 plt.plot(X_transpose[ind_01_map, 0],
-         X_transpose[ind_01_map, 1], '+r', label="Incorrect Class 1")
+        X_transpose[ind_01_map, 1], '+r', label="Incorrect Class 1")
 plt.plot(X_transpose[ind_11_map, 0],
-         X_transpose[ind_11_map, 1], '+g', label="Correct Class 1")
+        X_transpose[ind_11_map, 1], '+g', label="Correct Class 1")
 
 plt.legend()
 plt.xlabel(r"$x_1$")
