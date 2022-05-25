@@ -39,7 +39,7 @@ print("num_classes: {}".format(num_classes))
 # As per what Prof. Mark said, "mean" matrix parameter to GaussianMixturePDFParameters
 # needs to be of shape [dimensions, components] instead of [components, dimensions].
 mu = np.array([[-0.5, 1], [-0.5, 1], [-0.5, 1]])
-print(mu.shape)
+# print(mu.shape)
 
 # Gaussian distributions covariance matrices
 Sigma = np.array([[[1, -0.5, 0.3],
@@ -58,7 +58,7 @@ gmm_params = prob_utils.GaussianMixturePDFParameters(
     priors, num_classes, mu, np.transpose(Sigma))
 gmm_params.print_pdf_params()
 
-print(gmm_params.component_pdfs[0].mean.shape)
+# print(gmm_params.component_pdfs[0].mean.shape)
 
 # Output samples and labels
 X = np.zeros([num_samples, dimensions])
@@ -123,13 +123,13 @@ p_11_map = len(ind_11_map) / Nl[1]
 
 # Probability of error for MAP classifier, empirically estimated
 prob_error_erm = np.array((p_10_map, p_01_map)).dot(Nl.T / num_samples)
-print(np.array((p_10_map, p_01_map)).shape)
+# print(np.array((p_10_map, p_01_map)).shape)
 # Display MAP decisions
 fig = plt.figure(figsize=(10, 10))
 
 # class 0 circle, class 1 +, correct green, incorrect red
-print(X.shape)
-print(ind_00_map)
+# print(X.shape)
+# print(ind_00_map)
 X_transpose = np.transpose(X)
 plt.plot(X_transpose[ind_00_map, 0],
          X_transpose[ind_00_map, 1], 'og', label="Correct Class 0")
