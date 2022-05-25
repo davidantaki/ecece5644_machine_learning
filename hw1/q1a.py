@@ -189,7 +189,7 @@ ax_roc.set_ylabel(r"Probability of correct decision $P(D=1|L=1)$")
 plt.grid(True)
 plt.show()
 
-'''
+
 # Take diag so we have (C, C) shape of priors with prior prob along diagonal
 class_priors = np.diag(priors)
 print("class_priors:\n{}".format(class_priors))
@@ -215,4 +215,3 @@ print("Total Number of Misclassified Samples: {:d}".format(
 
 prob_error = 1 - (correct_class_samples / num_samples)
 print("Empirically Estimated Probability of Error: {:.4f}".format(prob_error))
-'''
