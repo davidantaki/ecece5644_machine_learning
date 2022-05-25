@@ -3,7 +3,7 @@ from matplotlib import cm
 import numpy as np
 from scipy.stats import multivariate_normal  # MVN not univariate
 from sklearn.metrics import confusion_matrix
-import prob_utils
+from modules import prob_utils
 
 np.set_printoptions(suppress=True)
 

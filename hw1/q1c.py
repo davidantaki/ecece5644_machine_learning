@@ -4,7 +4,7 @@ from matplotlib import cm
 import numpy as np
 from scipy.stats import multivariate_normal  # MVN not univariate
 from sklearn.metrics import confusion_matrix
-import prob_utils
+import modules.prob_utils
 from q1a import X_transpose, X, mu, Sigma, sample_labels, estimate_roc, ax_roc,\
     Nl, num_samples, ax_roc, fig_roc, roc_erm, roc_map, prob_error_erm
 
