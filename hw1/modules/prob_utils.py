@@ -99,8 +99,13 @@ class GaussianMixturePDFParameters(PDFParameters):
         self.C = C
         self.component_pdfs = np.ndarray(self.C, dtype=np.object)
 
+        # print("mean: {}".format(mean))
+
         for c in range(C):
-            self.component_pdfs[c] = GaussianPDFParameters(mean[..., [c]], cov[..., c])
+            # print("mean[..., c]: {}".format(mean[c]))
+            # print("cov[..., c]: {}".format(cov[..., c]))
+            self.component_pdfs[c] = GaussianPDFParameters(
+                mean[..., [c]], cov[..., c])
 
 
 def generate_random_samples(N, n, pdf_params, visualize=False):
@@ -121,13 +126,18 @@ def generate_random_samples(N, n, pdf_params, visualize=False):
         if n > 1:
             l, u = eig(pdf_params.cov)
             scale = u * (l ** 0.5)
+            print("scale {}".format(scale))
         else:
             scale = pdf_params.cov ** 0.5
 
         # z ~ N(0, I) are zero-mean identity-covariance Gaussian samples
+        print("n: {}".format(n))
+        print("N: {}".format(N))
         z = np.random.randn(n, N)
         # x ~ N(pdf.mean, pdf.cov)
-        x = np.matmul(scale, z) + pdf_params.mean  # Matrix multiplication
+        x = np.matmul(scale, z)
+        print(x.shape)
+        x = x + pdf_params.mean  # Matrix multiplication
     elif pdf_params.dist_type == 'Uniform':
         # z ~ Uniform[-1, 1] ^ n are zero-mean "unit-scale" uniformly distributed samples
         z = 2 * (np.random.rand(n, N) - 0.5)
