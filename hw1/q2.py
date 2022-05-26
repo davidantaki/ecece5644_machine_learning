@@ -42,14 +42,14 @@ mu_transpose = np.transpose(mu)
 # factors that lead to a significant amount of overlap between the data
 # from these Gaussians)
 identity = np.identity(2)
-print(identity)
+# print(identity)
 Sigma = np.zeros((4, 2, 2))
-print(Sigma)
+# print(Sigma)
 Sigma[0] = identity * 10.01
 Sigma[1] = identity * 10.11
 Sigma[2] = identity * 10.31
 Sigma[3] = identity * 9.92
-print(Sigma)
+# print(Sigma)
 
 
 # Determine dimensionality from mixture PDF parameters
@@ -111,18 +111,18 @@ class_cond_likelihoods = np.array(
     [multivariate_normal.pdf(np.transpose(X), mu[c], Sigma[c]) for c in range(C)])
 print("class_cond_likelihoods:\n{}".format(class_cond_likelihoods))
 class_priors = np.diag(priors)
-print(class_cond_likelihoods.shape)
-print(class_priors.shape)
+# print(class_cond_likelihoods.shape)
+# print(class_priors.shape)
 class_posteriors = class_priors.dot(class_cond_likelihoods)
-print(class_posteriors)
+print("class_posteriors:\n{}".format(class_posteriors))
 
 # We want to create the risk matrix of size 4 x N
 cond_risk = Lambda.dot(class_posteriors)
-print(cond_risk)
+print("cond_risk:\n{}".format(cond_risk))
 
 # Get the decision for each column in risk_mat
 decisions = np.argmin(cond_risk, axis=0)
-print(decisions.shape)
+# print(decisions.shape)
 
 # Plot for decisions vs true labels
 fig = plt.figure(figsize=(12, 10))
@@ -198,18 +198,18 @@ class_cond_likelihoods = np.array(
     [multivariate_normal.pdf(np.transpose(X), mu[c], Sigma[c]) for c in range(C)])
 print("class_cond_likelihoods:\n{}".format(class_cond_likelihoods))
 class_priors = np.diag(priors)
-print(class_cond_likelihoods.shape)
-print(class_priors.shape)
+# print(class_cond_likelihoods.shape)
+# print(class_priors.shape)
 class_posteriors = class_priors.dot(class_cond_likelihoods)
-print(class_posteriors)
+print("class_posteriors:n\n{}".format(class_posteriors))
 
 # We want to create the risk matrix of size 4 x N
 cond_risk = Lambda.dot(class_posteriors)
-print(cond_risk)
+print("cond_risk:n\n{}".format(cond_risk))
 
 # Get the decision for each column in risk_mat
 decisions = np.argmin(cond_risk, axis=0)
-print(decisions.shape)
+# print(decisions.shape)
 
 # Plot for decisions vs true labels
 fig = plt.figure(figsize=(12, 10))
