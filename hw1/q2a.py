@@ -108,7 +108,94 @@ print("Loss Matrix:\n{}".format(Lambda))
 # Row 0 = likelihoods that given the sample, it is of Class 0.
 # Row 1 = likelihoods that given the sample, it is of Class 1.
 class_cond_likelihoods = np.array(
-    [multivariate_normal.pdf(np.transpose(X), mu2[c], Sigma[c]) for c in range(C)])
+    [multivariate_normal.pdf(np.transpose(X), mu[c], Sigma[c]) for c in range(C)])
+print("class_cond_likelihoods:\n{}".format(class_cond_likelihoods))
+class_priors = np.diag(priors)
+print(class_cond_likelihoods.shape)
+print(class_priors.shape)
+class_posteriors = class_priors.dot(class_cond_likelihoods)
+print(class_posteriors)
+
+# We want to create the risk matrix of size 4 x N
+cond_risk = Lambda.dot(class_posteriors)
+print(cond_risk)
+
+# Get the decision for each column in risk_mat
+decisions = np.argmin(cond_risk, axis=0)
+print(decisions.shape)
+
+# Plot for decisions vs true labels
+fig = plt.figure(figsize=(12, 10))
+marker_shapes = '.o^s'  # Accomodates up to C=5
+marker_colors = 'brgmy'
+
+# Get sample class counts
+sample_class_counts = np.array([sum(sample_labels == j) for j in class_labels])
+X_transpose = np.transpose(X)
+# Confusion matrix
+conf_mat = np.zeros((C, C))
+for i in class_labels:  # Each decision option
+    for j in class_labels:  # Each class label
+        ind_ij = np.argwhere((decisions == i) & (sample_labels == j))
+        # Average over class sample count
+        conf_mat[i, j] = len(ind_ij)/sample_class_counts[j]
+
+        # True label = Marker shape; Decision = Marker Color
+        if i == j:
+            marker = marker_shapes[j] + 'g'
+            label = "Correct Class "+str(i)
+            plt.plot(X_transpose[ind_ij, 0], X_transpose[ind_ij,
+                     1], marker, markersize=3, label=label)
+        elif i != j:
+            marker = marker_shapes[j] + 'r'
+            label = "Incorrect Class "+str(i)
+            plt.plot(X_transpose[ind_ij, 0], X_transpose[ind_ij,
+                     1], marker, markersize=3, label=label)
+
+print("Confusion matrix:")
+print(conf_mat)
+
+print("Minimum Probability of Error:")
+prob_error = 1 - np.diag(conf_mat).dot(sample_class_counts / num_samples)
+print(prob_error)
+
+plt.legend(loc=2, prop={'size': 10})
+plt.xlabel(r"$x_1$")
+plt.ylabel(r"$x_2$")
+plt.tight_layout()
+plt.title(
+    "Minimum Probability of Error Classified Sampled Data:  {:.3f}".format(prob_error))
+plt.show()
+
+
+##################### PART B #####################
+
+# New Loss matrix
+Lambda = np.zeros((C, C))
+Lambda[0][0] = 0
+Lambda[0][1] = 1
+Lambda[0][2] = 2
+Lambda[0][3] = 3
+Lambda[1][0] = 1
+Lambda[1][1] = 0
+Lambda[1][2] = 1
+Lambda[1][3] = 2
+Lambda[2][0] = 2
+Lambda[2][1] = 1
+Lambda[2][2] = 0
+Lambda[2][3] = 1
+Lambda[3][0] = 3
+Lambda[3][1] = 2
+Lambda[3][2] = 1
+Lambda[3][3] = 0
+print("Loss Matrix:\n{}".format(Lambda))
+
+# Min prob. of error classifier
+# Conditional likelihoods of each class given x, shape (C, N)
+# Row 0 = likelihoods that given the sample, it is of Class 0.
+# Row 1 = likelihoods that given the sample, it is of Class 1.
+class_cond_likelihoods = np.array(
+    [multivariate_normal.pdf(np.transpose(X), mu[c], Sigma[c]) for c in range(C)])
 print("class_cond_likelihoods:\n{}".format(class_cond_likelihoods))
 class_priors = np.diag(priors)
 print(class_cond_likelihoods.shape)
