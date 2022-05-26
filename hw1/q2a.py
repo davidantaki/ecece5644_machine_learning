@@ -45,10 +45,10 @@ identity = np.identity(2)
 print(identity)
 Sigma = np.zeros((4, 2, 2))
 print(Sigma)
-Sigma[0] = identity * 1.01
-Sigma[1] = identity * 1.11
-Sigma[2] = identity * 1.31
-Sigma[3] = identity * 0.92
+Sigma[0] = identity * 10.01
+Sigma[1] = identity * 10.11
+Sigma[2] = identity * 10.31
+Sigma[3] = identity * 9.92
 print(Sigma)
 
 
