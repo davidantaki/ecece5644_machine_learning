@@ -1,3 +1,4 @@
+from sys import float_info  # Threshold smallest positive floating value
 import matplotlib.pyplot as plt  # For general plotting
 from matplotlib import cm
 import numpy as np
@@ -143,25 +144,24 @@ plt.tight_layout()
 plt.show()
 
 
-from sys import float_info # Threshold smallest positive floating value
-
 # Generate ROC curve samples
+
 def estimate_roc(discriminant_score, label):
     Nlabels = np.array((sum(label == 0), sum(label == 1)))
 
     sorted_score = sorted(discriminant_score)
 
     # Use tau values that will account for every possible classification split
-    taus = ([sorted_score[0] - float_info.epsilon] + 
-             sorted_score +
-             [sorted_score[-1] + float_info.epsilon])
+    taus = ([sorted_score[0] - float_info.epsilon] +
+            sorted_score +
+            [sorted_score[-1] + float_info.epsilon])
 
     # Calculate the decision label for each observation for each gamma
     decisions = [discriminant_score >= t for t in taus]
 
-    ind10 = [np.argwhere((d==1) & (label==0)) for d in decisions]
+    ind10 = [np.argwhere((d == 1) & (label == 0)) for d in decisions]
     p10 = [len(inds)/Nlabels[0] for inds in ind10]
-    ind11 = [np.argwhere((d==1) & (label==1)) for d in decisions]
+    ind11 = [np.argwhere((d == 1) & (label == 1)) for d in decisions]
     p11 = [len(inds)/Nlabels[1] for inds in ind11]
 
     # ROC has FPR on the x-axis and TPR on the y-axis
@@ -169,13 +169,15 @@ def estimate_roc(discriminant_score, label):
 
     return roc, taus
 
+
 # Construct the ROC for ERM by changing log(gamma)
 roc_erm, _ = estimate_roc(discriminant_score_erm, sample_labels)
 roc_map = np.array((p_10_map, p_11_map))
 
 fig_roc, ax_roc = plt.subplots(figsize=(10, 10))
 ax_roc.plot(roc_erm[0], roc_erm[1])
-ax_roc.plot(roc_map[0], roc_map[1], 'rx', label="Minimum P(Error) MAP", markersize=16)
+ax_roc.plot(roc_map[0], roc_map[1], 'rx',
+            label="Minimum P(Error) MAP", markersize=16)
 ax_roc.legend()
 ax_roc.set_xlabel(r"Probability of false alarm $P(D=1|L=0)$")
 ax_roc.set_ylabel(r"Probability of correct decision $P(D=1|L=1)$")
