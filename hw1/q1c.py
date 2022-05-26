@@ -5,7 +5,7 @@ import numpy as np
 from scipy.stats import multivariate_normal  # MVN not univariate
 from sklearn.metrics import confusion_matrix
 import modules.prob_utils
-from q1a import X_transpose, X, mu, Sigma, sample_labels, estimate_roc, ax_roc,\
+from q1a import X_transpose, X, mu, mu_transpose, Sigma, sample_labels, estimate_roc, ax_roc,\
     Nl, num_samples, ax_roc, fig_roc, roc_erm, roc_map, prob_error_erm
 
 
@@ -24,6 +24,7 @@ def perform_lda(X, mu, Sigma, C=2):
         z: Scalar LDA projections of input samples, shape [N, 1].
     """
 
+    # sample average estimators
     mu = np.array([mu[i].reshape(-1, 1) for i in range(C)])
     cov = np.array([Sigma[i].T for i in range(C)])
 
@@ -59,7 +60,7 @@ def main():
     # print(np.transpose(mu))
     # print(Sigma)
     _, discriminant_score_lda = perform_lda(
-        X_transpose, np.transpose(mu), Sigma)
+        X_transpose, mu, Sigma)
 
     # Estimate the ROC curve for this LDA classifier
     roc_lda, tau_lda = estimate_roc(discriminant_score_lda, sample_labels)
