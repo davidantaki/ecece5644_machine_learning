@@ -6,6 +6,9 @@ from scipy.stats import multivariate_normal  # MVN not univariate
 from sklearn.metrics import confusion_matrix
 from modules import prob_utils
 
+
+##################### PART A #####################
+
 np.set_printoptions(suppress=True)
 
 # Set seed to generate reproducible "pseudo-randomness" (handles scipy's "randomness" too)
