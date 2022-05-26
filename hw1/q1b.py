@@ -32,7 +32,12 @@ print("num_classes: {}".format(num_classes))
 
 # As per what Prof. Mark said, "mean" matrix parameter to GaussianMixturePDFParameters
 # needs to be of shape [dimensions, components] instead of [components, dimensions].
-mu = np.array([[-0.5, 1], [-0.5, 1], [-0.5, 1]])
+# mu = np.array([[-0.5, 1], [-0.5, 1], [-0.5, 1]])
+# Given mean matrix
+mu = np.array([[-0.5, -0.5, -0.5], [1, 1, 1]])
+# As per what Prof. Mark said, "mean" matrix parameter to GaussianMixturePDFParameters
+# needs to be of shape [dimensions, components] instead of [components, dimensions].
+mu_transpose = np.transpose(mu)
 print(mu.shape)
 
 # Gaussian distributions covariance matrices
@@ -44,12 +49,12 @@ Sigma = np.array([[[1, 0, 0],
                 [0, 0, 1]]])
 
 # Determine dimensionality from mixture PDF parameters
-dimensions = mu.shape[0]
+dimensions = mu.shape[1]
 print("dimensions: {}".format(dimensions))
 
 # Create PDF parameter structure
 gmm_params = prob_utils.GaussianMixturePDFParameters(
-    priors, num_classes, mu, np.transpose(Sigma))
+    priors, num_classes, mu_transpose, np.transpose(Sigma))
 gmm_params.print_pdf_params()
 
 print(gmm_params.component_pdfs[0].mean.shape)
@@ -73,13 +78,12 @@ print("Number of samples from Class 0: {:d}, Class 1: {:d}".format(
 
 C = num_classes
 
-mu2 = np.array([[-0.5, 1, 1], [-0.5, 1, 1], [-0.5, 1, 1]])
 # Min prob. of error classifier
 # Conditional likelihoods of each class given x, shape (C, N)
 # Row 0 = likelihoods that given the sample, it is of Class 0.
 # Row 1 = likelihoods that given the sample, it is of Class 1.
 class_cond_likelihoods = np.array(
-    [multivariate_normal.pdf(np.transpose(X), mu2[c], Sigma[c]) for c in range(C)])
+    [multivariate_normal.pdf(np.transpose(X), mu[c], Sigma[c]) for c in range(C)])
 print("class_cond_likelihoods:\n{}".format(class_cond_likelihoods))
 
 # MAP classifier (is a special case of ERM corresponding to 0-1 loss)
@@ -184,7 +188,6 @@ ax_roc.set_ylabel(r"Probability of correct decision $P(D=1|L=1)$")
 plt.grid(True)
 plt.show()
 
-'''
 # Take diag so we have (C, C) shape of priors with prior prob along diagonal
 class_priors = np.diag(priors)
 print("class_priors:\n{}".format(class_priors))
@@ -210,4 +213,3 @@ print("Total Number of Misclassified Samples: {:d}".format(
 
 prob_error = 1 - (correct_class_samples / num_samples)
 print("Empirically Estimated Probability of Error: {:.4f}".format(prob_error))
-'''
