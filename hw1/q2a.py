@@ -36,7 +36,7 @@ mu = np.array([[1, 1],
                [3, 3],
                [5, 5],
                [7, 7]])
-mu = np.transpose(mu)
+mu_transpose = np.transpose(mu)
 
 # Cov. matrices to be scaled versions of the identity matrix (with scale
 # factors that lead to a significant amount of overlap between the data
@@ -53,12 +53,12 @@ print(Sigma)
 
 
 # Determine dimensionality from mixture PDF parameters
-dimensions = mu.shape[0]
+dimensions = mu.shape[1]
 print("dimensions: {}".format(dimensions))
 
 # Create PDF parameter structure
 gmm_params = prob_utils.GaussianMixturePDFParameters(
-    priors, num_classes, mu, np.transpose(Sigma))
+    priors, num_classes, mu_transpose, np.transpose(Sigma))
 gmm_params.print_pdf_params()
 
 # print(gmm_params.component_pdfs[0].mean.shape)
@@ -97,8 +97,6 @@ print("Number of samples from Class 0: {:d}, Class 1: {:d}, Class 2: {:d},Class 
 
 C = num_classes
 
-
-mu2 = np.transpose(mu)
 
 # MAP classifier (is a special case of ERM corresponding to 0-1 loss)
 # 0-1 loss values yield MAP decision rule
