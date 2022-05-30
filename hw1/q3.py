@@ -106,21 +106,72 @@ X_transpose = np.transpose(X)
 #     x[:, c_ind] = generate_random_samples(
 #         c_N, n, pdf_params.component_pdfs[c], visualize=False)
 
-for i in range(0, 5):
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    x_ind = random.randint(0, 10)
-    y_ind = random.randint(0, 10)
-    z_ind = random.randint(0, 10)
-    while(y_ind == x_ind):
+# Plot all data
+print(X.shape)
+print(X)
+plt.plot(X)
+plt.show()
+
+visualize_raw_data_3d = False
+if visualize_raw_data_3d:
+    for i in range(0, 5):
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        x_ind = random.randint(0, 10)
         y_ind = random.randint(0, 10)
-    while(z_ind == x_ind or z_ind == y_ind):
         z_ind = random.randint(0, 10)
-    ax.scatter(X_transpose[x_ind, :],
-               X_transpose[y_ind, :], X_transpose[z_ind, :])
-    ax.set_xlabel(col_labels[x_ind])
-    ax.set_ylabel(col_labels[y_ind])
-    ax.set_zlabel(col_labels[z_ind])
-    ax.set_title("Wine Data Visulization")
-    plt.autoscale()
-    plt.show()
+        while(y_ind == x_ind):
+            y_ind = random.randint(0, 10)
+        while(z_ind == x_ind or z_ind == y_ind):
+            z_ind = random.randint(0, 10)
+        ax.scatter(X_transpose[x_ind, :],
+                   X_transpose[y_ind, :], X_transpose[z_ind, :])
+        ax.set_xlabel(col_labels[x_ind])
+        ax.set_ylabel(col_labels[y_ind])
+        ax.set_zlabel(col_labels[z_ind])
+        ax.set_title("Wine Data Visulization")
+        plt.autoscale()
+        plt.show()
+
+visualize_raw_data_2d = True
+if visualize_raw_data_2d:
+    for i in range(0, 5):
+        raw_data_fig = plt.figure(num=1, figsize=(10, 10))
+        x_ind = random.randint(0, 10)
+        y_ind = random.randint(0, 10)
+        while(y_ind == x_ind):
+            y_ind = random.randint(0, 10)
+        plt.scatter(X[:, x_ind], X[:, y_ind])
+        plt.xlabel(col_labels[x_ind])
+        plt.ylabel(col_labels[y_ind])
+        plt.title("Wine Raw Data Visulization")
+        plt.autoscale()
+        raw_data_fig.show()
+
+        ######## Do PCA ########
+
+        # First derive sample-based estimates of mean vector and covariance matrix:
+        mu_hat = np.mean(X, axis=0)
+        Sigma_hat = np.cov(X.T)
+
+        # Mean-subtraction is a necessary assumption for PCA, so perform this to obtain zero-mean sample set
+        C = X - mu_hat
+
+        # Get the eigenvectors (in U) and eigenvalues (in D) of the estimated covariance matrix
+        lambdas, U = np.linalg.eig(Sigma_hat)
+        # Get the indices from sorting lambdas in order of increasing value, with ::-1 slicing to then reverse order
+        idx = lambdas.argsort()[::-1]
+        # Extract corresponding sorted eigenvectors and eigenvalues
+        U = U[:, idx]
+        D = np.diag(lambdas[idx])
+
+        # Calculate the PC projections of zero-mean samples (in z)
+        Z = C.dot(U)
+
+        # Let's see what it looks like only along the first two PCs
+        pca_fig = plt.figure(num=2, figsize=(10, 10))
+        plt.scatter(C[:, x_ind], C[:, y_ind])
+        plt.xlabel(col_labels[x_ind])
+        plt.ylabel(col_labels[y_ind])
+        plt.title("Wine Data PCA Projections to 2D Space")
+        plt.show()
