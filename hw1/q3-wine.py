@@ -69,6 +69,9 @@ print('# of Errors', prob_errors, "\nEst. P(error)", prob_errors/num_samples)
 print(X.shape)
 print(X)
 plt.plot(X)
+plt.title("All Wine data")
+plt.xlabel("Sample Number")
+plt.ylabel("Sample Value")
 plt.show()
 
 visualize_raw_data_3d = False
