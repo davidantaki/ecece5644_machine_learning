@@ -7,14 +7,14 @@ from sklearn.metrics import confusion_matrix
 
 # Get sample labels aka "activity labels". These are the POSSIBLE sample labels but not the labels associated with data.
 possible_sample_labels = pandas.read_csv(
-    'C:\\Users\\David\\Videos\\GitHub\\ecece5644_machine_learning\\hw1\\UCI HAR Dataset\\UCI HAR Dataset\\activity_labels.txt', sep=' ', names=['acivity_num', 'activity_title'])
+    'UCI HAR Dataset\\UCI HAR Dataset\\activity_labels.txt', sep=' ', names=['acivity_num', 'activity_title'])
 possible_sample_labels = np.array(possible_sample_labels)
 print("possible_sample_labels:\n{}".format(possible_sample_labels))
 print("possible_sample_labels.shape:\n{}".format(possible_sample_labels.shape))
 
 # Column headers/features of the samples.
 col_names = pandas.read_csv(
-    'C:\\Users\\David\\Videos\\GitHub\\ecece5644_machine_learning\\hw1\\UCI HAR Dataset\\UCI HAR Dataset\\features.txt', sep=' ', names=['num', 'feature'])
+    'UCI HAR Dataset\\UCI HAR Dataset\\features.txt', sep=' ', names=['num', 'feature'])
 col_names = np.array(col_names)
 num_features = len(col_names)
 print("col_names:\n{}".format(col_names))
@@ -26,7 +26,7 @@ print("num_features:\n{}".format(num_features))
 
 # Get Data
 all_activity_data = pandas.read_csv(
-    'C:\\Users\\David\\Videos\\GitHub\\ecece5644_machine_learning\\hw1\\UCI HAR Dataset\\UCI HAR Dataset\\train\\X_train.csv', sep=',', names=None)
+    'UCI HAR Dataset\\UCI HAR Dataset\\train\\X_train.csv', sep=',', names=None)
 all_activity_data = np.array(all_activity_data)
 X = np.array(all_activity_data)
 X_transpose = np.transpose(X)
@@ -35,7 +35,7 @@ X_transpose = np.transpose(X)
 
 # Get sample labels associated with the data.
 sample_labels = pandas.read_csv(
-    'C:\\Users\\David\\Videos\\GitHub\\ecece5644_machine_learning\\hw1\\UCI HAR Dataset\\UCI HAR Dataset\\train\\y_train.txt', sep=' ', names=None)
+    'UCI HAR Dataset\\UCI HAR Dataset\\train\\y_train.txt', sep=' ', names=None)
 sample_labels = np.reshape(np.array(sample_labels), (1, 7351))
 sample_labels = np.array(sample_labels[0, :])
 print("sample_labels:\n{}".format(sample_labels))
