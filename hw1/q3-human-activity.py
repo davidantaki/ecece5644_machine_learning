@@ -29,6 +29,7 @@ all_activity_data = pandas.read_csv(
     'C:\\Users\\David\\Videos\\GitHub\\ecece5644_machine_learning\\hw1\\UCI HAR Dataset\\UCI HAR Dataset\\train\\X_train.csv', sep=',', names=None)
 all_activity_data = np.array(all_activity_data)
 X = np.array(all_activity_data)
+X_transpose = np.transpose(X)
 # print("all_activity_data:\n{}".format(all_activity_data))
 # print(all_activity_data.shape)
 
@@ -78,12 +79,10 @@ decisions = np.argmax(class_posteriors, axis=0) + \
     np.min(used_classes) * np.ones(num_samples)
 
 conf_matrix = confusion_matrix(decisions, sample_labels)
-print(conf_matrix)
+print("conf_matrix:\n{}".format(conf_matrix))
 
 prob_errors = len(np.argwhere(decisions != sample_labels))
 print('# of Errors', prob_errors, "\nEst. P(error)", prob_errors/num_samples)
-
-X_transpose = np.transpose(X)
 
 # Plot all data
 # print(X.shape)
