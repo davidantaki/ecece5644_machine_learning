@@ -170,7 +170,7 @@ if visualize_raw_data_2d:
 
         # Let's see what it looks like only along the first two PCs
         pca_fig = plt.figure(num=2, figsize=(10, 10))
-        plt.scatter(C[:, x_ind], C[:, y_ind])
+        plt.scatter(Z[:, x_ind], Z[:, y_ind])
         plt.xlabel(col_labels[x_ind])
         plt.ylabel(col_labels[y_ind])
         plt.title("Wine Data PCA Projections to 2D Space")
