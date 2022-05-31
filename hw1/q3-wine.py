@@ -16,7 +16,7 @@ col_labels = all_wine_data.columns
 print("col_labels:\n{}".format(col_labels))
 # Sample labels is the "quality" column
 sample_labels = np.array(all_wine_data[all_wine_data.columns[11]])
-print(sample_labels.shape)
+print("sample_labels.shape:\n{}".format(sample_labels.shape))
 
 print("labels:\n{}".format(sample_labels))
 X = np.array(all_wine_data[all_wine_data.columns[0:11]])
