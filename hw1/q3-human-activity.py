@@ -114,6 +114,8 @@ if visualize_raw_data_3d:
         plt.autoscale()
         plt.show()
 
+# This will visualize subsets of features randomly.
+# It will plot the raw feature data, and then run PCA on the data and plot the PCA data.
 visualize_raw_data_2d = True
 if visualize_raw_data_2d:
     for i in range(0, 5):
