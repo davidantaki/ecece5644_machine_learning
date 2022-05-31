@@ -5,8 +5,6 @@ import pandas
 import numpy as np
 from sklearn.metrics import confusion_matrix
 
-print("hello")
-
 # Get sample labels aka "activity labels". These are the POSSIBLE sample labels but not the labels associated with data.
 possible_sample_labels = pandas.read_csv(
     'C:\\Users\\David\\Videos\\GitHub\\ecece5644_machine_learning\\hw1\\UCI HAR Dataset\\UCI HAR Dataset\\activity_labels.txt', sep=' ', names=['acivity_num', 'activity_title'])
@@ -93,6 +91,8 @@ X_transpose = np.transpose(X)
 # plt.plot(X)
 # plt.show()
 
+# Plots random subsets of the data in 3-dimensions.
+# Does not perform PCA nor plot PCA data.
 visualize_raw_data_3d = False
 if visualize_raw_data_3d:
     for i in range(0, 5):

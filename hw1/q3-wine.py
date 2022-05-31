@@ -7,25 +7,30 @@ from sklearn.metrics import confusion_matrix
 
 print("hello")
 
-# Get Data
+# Get All Wine Data
 all_wine_data = pandas.read_csv('winequality-white.csv', sep=';')
 print("all_wine_data:\n{}".format(all_wine_data))
 print(all_wine_data.shape)
+X = np.array(all_wine_data[all_wine_data.columns[0:11]])
+X_transpose = np.transpose(X)
+print("samples:\n{}".format(X))
 
+# Get column labels (feature labels)
 col_labels = all_wine_data.columns
 print("col_labels:\n{}".format(col_labels))
+
+# Get sample labels
 # Sample labels is the "quality" column
 sample_labels = np.array(all_wine_data[all_wine_data.columns[11]])
 print("sample_labels.shape:\n{}".format(sample_labels.shape))
-
 print("labels:\n{}".format(sample_labels))
-X = np.array(all_wine_data[all_wine_data.columns[0:11]])
-print("samples:\n{}".format(X))
 num_samples = len(sample_labels)
 print("num_samples:\n{}".format(num_samples))
-print(X.shape)
+# print(X.shape)
 
-actual_class_labels = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+# These are the labels that a sample might be classified as.
+possible_class_labels = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+
 # Get class parameters
 used_classes, class_counts = np.unique(sample_labels, return_counts=True)
 print("num_samples:\n{}".format(num_samples))
@@ -59,52 +64,6 @@ print(conf_matrix)
 
 prob_errors = len(np.argwhere(decisions != sample_labels))
 print('# of Errors', prob_errors, "\nEst. P(error)", prob_errors/num_samples)
-
-# # MAP classifier (is a special case of ERM corresponding to 0-1 loss)
-# # 0-1 loss values yield MAP decision rule
-# Lambda = np.ones((num_classes, num_classes)) - np.identity(num_classes)
-# print("Loss Matrix:\n{}".format(Lambda))
-
-# # We want to create the risk matrix of size 4 x N
-# cond_risk = Lambda.dot(class_posteriors)
-# print("cond_risk:\n{}".format(cond_risk))
-
-# # Get the decision for each column in risk_mat
-# decisions = np.argmin(cond_risk, axis=0)
-# # print(decisions.shape)
-
-# # Get sample class counts
-# sample_class_counts = class_counts
-# # sample_class_counts = np.array([sum(sample_labels == j) for j in actual_class_labels])
-X_transpose = np.transpose(X)
-# # Confusion matrix
-# conf_mat = np.zeros((num_classes, num_classes))
-
-# print("Confusion matrix:")
-# print(conf_mat)
-
-# print("Minimum Probability of Error:")
-# prob_error = 1 - np.diag(conf_matrix).dot(class_counts / num_samples)
-# print(prob_error)
-
-
-# Output samples and labels
-# x = np.zeros([n, N])
-# y = np.zeros(N)
-
-# Decide randomly which samples will come from each component
-# u = np.random.rand(N)
-# thresholds = np.cumsum(pdf_params.priors)
-
-# for c in range(pdf_params.C):
-#     # Get randomly sampled indices for this component
-#     c_ind = np.argwhere(u <= thresholds[c])[:, 0]
-#     c_N = len(c_ind)  # No. of samples in this component
-#     y[c_ind] = c * np.ones(c_N)
-#     # Multiply by 1.1 to fail <= thresholds and thus not reuse samples
-#     u[c_ind] = 1.1 * np.ones(c_N)
-#     x[:, c_ind] = generate_random_samples(
-#         c_N, n, pdf_params.component_pdfs[c], visualize=False)
 
 # Plot all data
 print(X.shape)
