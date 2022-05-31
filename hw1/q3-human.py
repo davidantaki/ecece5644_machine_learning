@@ -31,8 +31,8 @@ all_activity_data = pandas.read_csv(
     'C:\\Users\\David\\Videos\\GitHub\\ecece5644_machine_learning\\hw1\\UCI HAR Dataset\\UCI HAR Dataset\\train\\X_train.csv', sep=',', names=None)
 all_activity_data = np.array(all_activity_data)
 X = np.array(all_activity_data)
-print("all_activity_data:\n{}".format(all_activity_data))
-print(all_activity_data.shape)
+# print("all_activity_data:\n{}".format(all_activity_data))
+# print(all_activity_data.shape)
 
 # Get sample labels associated with the data.
 sample_labels = pandas.read_csv(
