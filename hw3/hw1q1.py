@@ -513,6 +513,22 @@ def get_model_order_with_cross_validation():
     print(mse_train_m)
     print(mse_valid_m)
 
+    # Graph probability of error vs number of perceptrons
+    fig, ax = plt.subplots(figsize=(10, 10))
+    ax.plot(n_perceptrons, mse_train_m, color="b", marker="s", label=r"$D_{train}$")
+    ax.plot(n_perceptrons, mse_valid_m, color="r", marker="x", label=r"$D_{valid}$")
+
+    # Use logarithmic y-scale as MSE values get very large
+    # ax.set_yscale('log')
+    # Force x-axis for degrees to be integer
+    # ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+    ax.legend(loc='upper left', shadow=True)
+    plt.xlabel("Number of Hidden Perceptrons")
+    plt.ylabel("P(error)")
+    plt.title("P(error) vs Num. of Hidden Perceptrons with Separate Training & Validation Sets")
+    plt.show()
+
     # +1 as the index starts from 0 while the degrees start from 1
     optimal_d = np.argmin(mse_valid_m) + 1
     print("The model selected to best fit the data without overfitting is: d={}".format(optimal_d))
@@ -563,5 +579,4 @@ plt.show()
 
 
 get_theoretically_optimal_classifier()
-exit()
 get_model_order_with_cross_validation()
