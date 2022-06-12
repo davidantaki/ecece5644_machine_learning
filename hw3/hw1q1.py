@@ -1,3 +1,5 @@
+# Author: David Antaki
+
 # Widget to manipulate plots in Jupyter notebooks
 from torchsummary import summary
 import torch.nn.functional as F
