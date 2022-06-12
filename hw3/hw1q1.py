@@ -341,6 +341,7 @@ plt.title("Training Dataset")
 plt.legend()
 plt.show()
 
+'''
 fig = plt.figure(figsize=(10, 10))
 ax_raw = fig.add_subplot(111, projection='3d')
 ax_raw.scatter(X_test[y_test == 0, 0], X_test[y_test == 0, 1],
@@ -356,7 +357,8 @@ ax_raw.set_ylabel(r"$x_1$")
 ax_raw.set_zlabel(r"$x_2$")
 plt.title("Testing Dataset")
 plt.legend()
-# plt.show()
+plt.show()
+'''
 
 ############################ END Genarate Data from Gaussian Mixture Model ############################
 
