@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.colors as mcol
 import matplotlib.pyplot as plt  # For general plotting
 from sys import float_info  # Threshold smallest positive floating value
+from sklearn.model_selection import KFold
 
 
 def perform_lda(X, labels, C=2):
@@ -171,6 +172,72 @@ def create_data(N):
     return X, y
 
 
+class TwoLayerMLP(nn.Module):
+    # Two-layer MLP (not really a perceptron activation function...) network class
+
+    def __init__(self, input_dim, hidden_dim, C):
+        super(TwoLayerMLP, self).__init__()
+        # Fully connected layer WX + b mapping from input_dim (n) -> hidden_layer_dim
+        self.input_fc = nn.Linear(input_dim, hidden_dim)
+        # Output layer again fully connected mapping from hidden_layer_dim -> outputs_dim (C)
+        self.output_fc = nn.Linear(hidden_dim, C)
+        # Log Softmax (faster and better than straight Softmax)
+        # dim=1 refers to the dimension along which the softmax operation is computed
+        # In this case computing probabilities across dim 1, i.e., along classes at output layer
+        self.log_softmax = nn.LogSoftmax(dim=1)
+
+    # Don't call this function directly!!
+    # Simply pass input to model and forward(input) returns output, e.g. model(X)
+    def forward(self, X):
+        # X = [batch_size, input_dim (n)]
+        X = self.input_fc(X)
+        # Non-linear activation function, e.g. ReLU (default good choice)
+        # Could also choose F.softplus(x) for smooth-ReLU, empirically worse than ReLU
+        X = F.relu(X)
+        # X = [batch_size, hidden_dim]
+        # Connect to last layer and output 'logits'
+        X = self.output_fc(X)
+        # Squash logits to probabilities that sum up to 1
+        y = self.log_softmax(X)
+        return y
+
+
+def model_train(model, data, labels, criterion, optimizer, num_epochs=25):
+    # Apparently good practice to set this "flag" too before training
+    # Does things like make sure Dropout layers are active, gradients are updated, etc.
+    # Probably not a big deal for our toy network, but still worth developing good practice
+    model.train()
+    # Optimize the neural network
+    for epoch in range(num_epochs):
+        # These outputs represent the model's predicted probabilities for each class.
+        outputs = model(data)
+        # Criterion computes the cross entropy loss between input and target
+        loss = criterion(outputs, labels)
+        # Set gradient buffers to zero explicitly before backprop
+        optimizer.zero_grad()
+        # Backward pass to compute the gradients through the network
+        loss.backward()
+        # GD step update
+        optimizer.step()
+
+    return model
+
+
+def model_predict(model, data):
+    # Similar idea to model.train(), set a flag to let network know your in "inference" mode
+    model.eval()
+    # Disabling gradient calculation is useful for inference, only forward pass!!
+    with torch.no_grad():
+        # Evaluate nn on test data and compare to true labels
+        predicted_labels = model(data)
+        # Back to numpy
+        predicted_labels = predicted_labels.detach().numpy()
+
+        return np.argmax(predicted_labels, 1)
+
+############################ Genarate Data from Gaussian Mixture Model ############################
+
+
 # Data
 gmm_pdf = {}
 # Class priors
@@ -206,25 +273,50 @@ Gs = [
 C = 4
 # Possible Labels
 L = np.array(range(C))
-# Number of samples per component
+# Number of samples per component for the training dataset
 N = 100
-# Total number of samples
+# Number of samples for the test dataset
+N_test = 100000
+# Total number of training samples
 tot_N = N*C
-X, y = create_data(N)
+X_train, y_train = create_data(N)
+X_test, y_test = create_data(N_test)
 
 
 fig = plt.figure(figsize=(10, 10))
 ax_raw = fig.add_subplot(111, projection='3d')
-ax_raw.scatter(X[y == 0, 0], X[y == 0, 1],
-               X[y == 0, 2], c='r', label="Class 0")
-ax_raw.scatter(X[y == 1, 0], X[y == 1, 1],
-               X[y == 1, 2], c='b', label="Class 1")
-ax_raw.scatter(X[y == 2, 0], X[y == 2, 1], X[y == 2, 2], 'r*', label="Class 2")
-ax_raw.scatter(X[y == 3, 0], X[y == 3, 1], X[y == 3, 2], 'g^', label="Class 3")
+ax_raw.scatter(X_train[y_train == 0, 0], X_train[y_train == 0, 1],
+               X_train[y_train == 0, 2], c='r', label="Class 0")
+ax_raw.scatter(X_train[y_train == 1, 0], X_train[y_train == 1, 1],
+               X_train[y_train == 1, 2], c='b', label="Class 1")
+ax_raw.scatter(X_train[y_train == 2, 0], X_train[y_train == 2, 1], X_train[y_train == 2, 2], 'r*', label="Class 2")
+ax_raw.scatter(X_train[y_train == 3, 0], X_train[y_train == 3, 1], X_train[y_train == 3, 2], 'g^', label="Class 3")
 ax_raw.set_xlabel(r"$x_0$")
 ax_raw.set_ylabel(r"$x_1$")
 ax_raw.set_zlabel(r"$x_2$")
+plt.title("Training Dataset")
+plt.legend()
 plt.show()
+
+fig = plt.figure(figsize=(10, 10))
+ax_raw = fig.add_subplot(111, projection='3d')
+ax_raw.scatter(X_test[y_test == 0, 0], X_test[y_test == 0, 1],
+               X_test[y_test == 0, 2], c='r', label="Class 0")
+ax_raw.scatter(X_test[y_test == 1, 0], X_test[y_test == 1, 1],
+               X_test[y_test == 1, 2], c='b', label="Class 1")
+ax_raw.scatter(X_test[y_test == 2, 0], X_test[y_test == 2, 1],
+               X_test[y_test == 2, 2], 'r*', label="Class 2")
+ax_raw.scatter(X_test[y_test == 3, 0], X_test[y_test == 3, 1],
+               X_test[y_test == 3, 2], 'g^', label="Class 3")
+ax_raw.set_xlabel(r"$x_0$")
+ax_raw.set_ylabel(r"$x_1$")
+ax_raw.set_zlabel(r"$x_2$")
+plt.title("Testing Dataset")
+plt.legend()
+# plt.show()
+
+############################ END Genarate Data from Gaussian Mixture Model ############################
+
 
 ############################ Theoretically Optimal Classifier ############################
 
@@ -232,11 +324,11 @@ plt.show()
 Lambda = np.ones((C, C)) - np.eye(C)
 
 # ERM decision rule, take index/label associated with minimum conditional risk as decision (N, 1)
-decisions = perform_erm_classification(X, Lambda, gmm_pdf, C)
+decisions = perform_erm_classification(X_train, Lambda, gmm_pdf, C)
 
 # Simply using sklearn confusion matrix
-print("Confusion Matrix (rows: Predicted class, columns: True class):")
-conf_mat = confusion_matrix(decisions, y)
+print("Confusion Matrix For Theoretically Optimal Classifier (rows: Predicted class, columns: True class):")
+conf_mat = confusion_matrix(decisions, y_train)
 print(conf_mat)
 
 correct_class_samples = np.sum(np.diag(conf_mat))
@@ -245,3 +337,144 @@ print("Total Mumber of Misclassified Samples: {:d}".format(
 
 prob_error = 1 - (correct_class_samples / tot_N)
 print("Empirically Estimated Probability of Error: {:.4f}".format(prob_error))
+
+############################ END Theoretically Optimal Classifier ############################
+
+################## Model Order Selection using Cross Validation ##################
+# Here we perform Cross Validation to decide on the best number of perceptrons to use in our MLP.
+input_dim = X_train.shape[1]
+# Number of perceptrons
+n_hidden_neurons = 16
+output_dim = C
+
+# It's called an MLP but really it's not...
+model = TwoLayerMLP(input_dim, n_hidden_neurons, output_dim)
+# Visualize network architecture
+print(model)
+
+
+# Stochastic GD with learning rate and momentum hyperparameters
+optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+# The nn.CrossEntropyLoss() loss function automatically performs a log_softmax() to
+# the output when validating, on top of calculating the negative log-likelihood using
+# nn.NLLLoss(), while also being more stable numerically... So don't implement from scratch
+criterion = nn.CrossEntropyLoss()
+num_epochs = 100
+
+# Convert numpy structures to PyTorch tensors, as these are the data types required by the library
+X_tensor = torch.FloatTensor(X_train)
+y_tensor = torch.LongTensor(y_train)
+
+# Train the model
+model = model_train(model, X_tensor, y_tensor, criterion,
+                    optimizer, num_epochs=num_epochs)
+
+
+X_tensor = torch.FloatTensor(X_train)
+y_pred = model_predict(model, X_tensor)
+conf_mat = confusion_matrix(y_train, y_pred)
+print(conf_mat)
+
+##############################################################################
+
+# Number of perceptrons we will try
+degs = np.arange(1, 16, 1)
+n_degs = np.max(degs)
+
+# Rename
+X_train = X_train
+y_train = y_train
+
+# Number of folds for CV
+K = 10
+
+# STEP 1: Partition the dataset into K approximately-equal-sized partitions
+# Shuffles data before doing the division into folds (not necessary, but a good idea)
+kf = KFold(n_splits=K, shuffle=True)
+
+# Allocate space for CV
+# No need for training loss storage too but useful comparison
+mse_valid_mk = np.empty((n_degs, K))
+mse_train_mk = np.empty((n_degs, K))  # Indexed by model m, data partition k
+
+# STEP 2: Try all polynomial orders between 1 (best line fit) and 21 (big time overfit) M=2
+for deg in degs:
+    # K-fold cross validation
+    k = 0
+    # NOTE that these subsets are of the TRAINING dataset
+    # Imagine we don't have enough data available to afford another entirely separate validation set
+    for train_indices, valid_indices in kf.split(X_train):
+        # Extract the training and validation sets from the K-fold split
+        X_train_k = X_train[train_indices]
+        y_train_k = y_train[train_indices]
+        X_valid_k = X_train[valid_indices]
+        y_valid_k = y_train[valid_indices]
+
+        # Train model parameters
+        poly_train_features_cv = PolynomialFeatures(
+            degree=deg, include_bias=True)
+        X_train_k_poly = poly_train_features_cv.fit_transform(X_train_k)
+        theta_mk = mle_solution(X_train_k_poly, y_train_k)
+
+        # Validation fold polynomial transformation
+        X_valid_k_poly = poly_train_features_cv.transform(X_valid_k)
+
+        # Make predictions on both the training and validation set
+        y_train_k_pred = X_train_k_poly.dot(theta_mk)
+        y_valid_k_pred = X_valid_k_poly.dot(theta_mk)
+
+        # Record MSE as well for this model and k-fold
+        mse_train_mk[deg - 1, k] = mse(y_train_k_pred, y_train_k)
+        mse_valid_mk[deg - 1, k] = mse(y_valid_k_pred, y_valid_k)
+        k += 1
+
+# STEP 3: Compute the average MSE loss for that model (based in this case on degree d)
+mse_train_m = np.mean(mse_train_mk, axis=1)  # Model average CV loss over folds
+mse_valid_m = np.mean(mse_valid_mk, axis=1)
+
+# +1 as the index starts from 0 while the degrees start from 1
+optimal_d = np.argmin(mse_valid_m) + 1
+print("The model selected to best fit the data without overfitting is: d={}".format(optimal_d))
+
+# STEP 4: Re-train using your optimally selected model (degree=3) and deploy!!
+# ...
+
+'''
+# Create coordinate matrices determined by the sample space
+xx, yy, zz = np.meshgrid(np.linspace(-4, 4, 250),
+                         np.linspace(-4, 4, 250), np.linspace(-4, 4, 250))
+
+grid = np.c_[xx.ravel(), yy.ravel(), zz.ravel()]
+
+# Set up test data as tensor
+grid_tensor = torch.FloatTensor(grid)
+# Z matrix are the predictions resulting from the forward pass through the network
+Z = model_predict(model, grid_tensor).reshape(xx.shape)
+print(Z.shape)
+
+plt.figure(figsize=(10, 8))
+
+# uses gray background for black dots
+# plt.pcolormesh(xx, yy, Z[:,:], cmap=plt.cm.coolwarm)
+
+fig = plt.figure(figsize=(10, 10))
+ax_raw = fig.add_subplot(111, projection='3d')
+ax_raw.scatter(X[:, 0], X[:, 1], X[:, 2], c='r', label="Class 0")
+# ax_raw.scatter(Z[y == 1, 0], Z[y == 1, 1],
+#                Z[y == 1, 2], c='b', label="Class 1")
+# ax_raw.scatter(Z[y == 2, 0], Z[y == 2, 1], Z[y == 2, 2], 'r*', label="Class 2")
+# ax_raw.scatter(Z[y == 3, 0], Z[y == 3, 1], Z[y == 3, 2], 'g^', label="Class 3")
+ax_raw.set_xlabel(r"$x_0$")
+ax_raw.set_ylabel(r"$x_1$")
+ax_raw.set_zlabel(r"$x_2$")
+plt.show()
+
+# plt.plot(X[y==0, 0], X[y==0, 1], 'bx', label="Class 0")
+# plt.plot(X[y==1, 0], X[y==1, 1], 'ko', label="Class 1")
+# plt.plot(X[y==2, 0], X[y==2, 1], 'r*', label="Class 2")
+# plt.xlabel(r"$x_1$")
+# plt.ylabel(r"$x_2$")
+# plt.title("MLP Classification Boundaries Train Set")
+# plt.legend()
+# plt.show()
+'''
