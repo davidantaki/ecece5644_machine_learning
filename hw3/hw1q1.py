@@ -243,22 +243,24 @@ gmm_pdf = {}
 # Class priors
 gmm_pdf['priors'] = np.array([0.5, 0.5, 0.5, 0.5])
 # Mean and covariance of data pdfs conditioned on labels
+# Gaussian distributions means
 gmm_pdf['mean'] = np.array([[2, 2, 2],
                             [-2, -2, -2],
                             [2, -2, 2],
-                            [-2, 2, -2]])  # Gaussian distributions means
+                            [-2, 2, -2]])
+# Gaussian distributions covariance matrices
 gmm_pdf['cov'] = np.array([[[1, -0.5, 0.3],
                             [-0.5, 1, -0.5],
                             [0.3, -0.5, 1]],
                            [[1, 0.3, -0.2],
                             [0.3, 1, 0.3],
                             [-0.2, 0.3, 1]],
-                           [[1, -0.5, 0.3],
-                            [-0.5, 1, -0.5],
-                            [0.3, -0.5, 1]],
-                           [[1, 0.3, -0.2],
-                            [0.3, 1, 0.3],
-                            [-0.2, 0.3, 1]]])  # Gaussian distributions covariance matrices
+                           [[0.1, 0.4, 0.6],
+                            [0.1, 0.3, 0.3],
+                            [0.2, 0.1, 0.9]],
+                           [[0.8, 0.3, 0.3],
+                            [0.1, 0.123, 0.8],
+                            [0.7, 0.6, 0.4]]])
 
 
 # 4 classes
@@ -289,8 +291,10 @@ ax_raw.scatter(X_train[y_train == 0, 0], X_train[y_train == 0, 1],
                X_train[y_train == 0, 2], c='r', label="Class 0")
 ax_raw.scatter(X_train[y_train == 1, 0], X_train[y_train == 1, 1],
                X_train[y_train == 1, 2], c='b', label="Class 1")
-ax_raw.scatter(X_train[y_train == 2, 0], X_train[y_train == 2, 1], X_train[y_train == 2, 2], 'r*', label="Class 2")
-ax_raw.scatter(X_train[y_train == 3, 0], X_train[y_train == 3, 1], X_train[y_train == 3, 2], 'g^', label="Class 3")
+ax_raw.scatter(X_train[y_train == 2, 0], X_train[y_train ==
+               2, 1], X_train[y_train == 2, 2], 'r*', label="Class 2")
+ax_raw.scatter(X_train[y_train == 3, 0], X_train[y_train ==
+               3, 1], X_train[y_train == 3, 2], 'g^', label="Class 3")
 ax_raw.set_xlabel(r"$x_0$")
 ax_raw.set_ylabel(r"$x_1$")
 ax_raw.set_zlabel(r"$x_2$")
@@ -319,125 +323,161 @@ plt.legend()
 
 
 ############################ Theoretically Optimal Classifier ############################
+def get_theoretically_optimal_classifier():
+    # If 0-1 loss then yield MAP decision rule, else ERM classifier
+    Lambda = np.ones((C, C)) - np.eye(C)
 
-# If 0-1 loss then yield MAP decision rule, else ERM classifier
-Lambda = np.ones((C, C)) - np.eye(C)
+    # ERM decision rule, take index/label associated with minimum conditional risk as decision (N, 1)
+    decisions = perform_erm_classification(X_train, Lambda, gmm_pdf, C)
 
-# ERM decision rule, take index/label associated with minimum conditional risk as decision (N, 1)
-decisions = perform_erm_classification(X_train, Lambda, gmm_pdf, C)
+    # Simply using sklearn confusion matrix
+    print("Confusion Matrix For Theoretically Optimal Classifier (rows: Predicted class, columns: True class):")
+    conf_mat = confusion_matrix(decisions, y_train)
+    print(conf_mat)
 
-# Simply using sklearn confusion matrix
-print("Confusion Matrix For Theoretically Optimal Classifier (rows: Predicted class, columns: True class):")
-conf_mat = confusion_matrix(decisions, y_train)
-print(conf_mat)
+    correct_class_samples = np.sum(np.diag(conf_mat))
+    print("Total Mumber of Misclassified Samples: {:d}".format(
+        tot_N - correct_class_samples))
 
-correct_class_samples = np.sum(np.diag(conf_mat))
-print("Total Mumber of Misclassified Samples: {:d}".format(
-    tot_N - correct_class_samples))
-
-prob_error = 1 - (correct_class_samples / tot_N)
-print("Empirically Estimated Probability of Error: {:.4f}".format(prob_error))
+    prob_error = 1 - (correct_class_samples / tot_N)
+    print(
+        "Empirically Estimated Probability of Error: {:.4f}".format(prob_error))
 
 ############################ END Theoretically Optimal Classifier ############################
 
 ################## Model Order Selection using Cross Validation ##################
 # Here we perform Cross Validation to decide on the best number of perceptrons to use in our MLP.
-input_dim = X_train.shape[1]
-# Number of perceptrons
-n_hidden_neurons = 16
-output_dim = C
-
-# It's called an MLP but really it's not...
-model = TwoLayerMLP(input_dim, n_hidden_neurons, output_dim)
-# Visualize network architecture
-print(model)
 
 
-# Stochastic GD with learning rate and momentum hyperparameters
-optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
-# The nn.CrossEntropyLoss() loss function automatically performs a log_softmax() to
-# the output when validating, on top of calculating the negative log-likelihood using
-# nn.NLLLoss(), while also being more stable numerically... So don't implement from scratch
-criterion = nn.CrossEntropyLoss()
-num_epochs = 100
+def get_model_order_with_cross_validation():
+    # Range of perceptrons we will try
+    n_perceptrons = np.arange(1, 30, 1)
+    max_n_perceptrons = np.max(n_perceptrons)
 
-# Convert numpy structures to PyTorch tensors, as these are the data types required by the library
-X_tensor = torch.FloatTensor(X_train)
-y_tensor = torch.LongTensor(y_train)
+    # Number of folds for CV
+    K = 10
 
-# Train the model
-model = model_train(model, X_tensor, y_tensor, criterion,
-                    optimizer, num_epochs=num_epochs)
+    # STEP 1: Partition the dataset into K approximately-equal-sized partitions
+    # Shuffles data before doing the division into folds (not necessary, but a good idea)
+    kf = KFold(n_splits=K, shuffle=True)
 
+    # Allocate space for CV
+    # No need for training loss storage too but useful comparison
+    mse_valid_mk = np.empty((max_n_perceptrons, K))
+    # Indexed by model m, data partition k
+    mse_train_mk = np.empty((max_n_perceptrons, K))
 
-X_tensor = torch.FloatTensor(X_train)
-y_pred = model_predict(model, X_tensor)
-conf_mat = confusion_matrix(y_train, y_pred)
-print(conf_mat)
+    # STEP 2: Try all polynomial orders between 1 (best line fit) and 21 (big time overfit) M=2
+    for n in n_perceptrons:
+        # K-fold cross validation
+        k = 0
+        # NOTE that these subsets are of the TRAINING dataset
+        # Imagine we don't have enough data available to afford another entirely separate validation set
+        for train_indices, valid_indices in kf.split(X_train):
+            # Extract the training and validation sets from the K-fold split
+            X_train_k = X_train[train_indices]
+            y_train_k = y_train[train_indices]
+            X_valid_k = X_train[valid_indices]
+            y_valid_k = y_train[valid_indices]
 
-##############################################################################
+            input_dim = X_train_k.shape[1]
+            # n_hidden_neurons = 16
+            output_dim = C
+            model = TwoLayerMLP(input_dim, n, output_dim)
+            # Visualize network architecture
+            print(model)
 
-# Number of perceptrons we will try
-degs = np.arange(1, 16, 1)
-n_degs = np.max(degs)
+            # Stochastic GD with learning rate and momentum hyperparameters
+            optimizer = torch.optim.SGD(
+                model.parameters(), lr=0.01, momentum=0.9)
+            # The nn.CrossEntropyLoss() loss function automatically performs a log_softmax() to
+            # the output when validating, on top of calculating the negative log-likelihood using
+            # nn.NLLLoss(), while also being more stable numerically... So don't implement from scratch
+            criterion = nn.CrossEntropyLoss()
+            num_epochs = 100
 
-# Rename
-X_train = X_train
-y_train = y_train
+            # Convert numpy structures to PyTorch tensors, as these are the data types required by the library
+            X_train_k_tensor = torch.FloatTensor(X_train_k)
+            y_train_k_tensor = torch.LongTensor(y_train_k)
+            X_valid_k_tensor = torch.FloatTensor(X_valid_k)
+            y_valid_k_tensor = torch.LongTensor(y_valid_k)
 
-# Number of folds for CV
-K = 10
+            # Train the model
+            model = model_train(model, X_train_k_tensor, y_train_k_tensor, criterion,
+                                optimizer, num_epochs=num_epochs)
 
-# STEP 1: Partition the dataset into K approximately-equal-sized partitions
-# Shuffles data before doing the division into folds (not necessary, but a good idea)
-kf = KFold(n_splits=K, shuffle=True)
+            # Using the trained model get the predicted classifications/labels from the test and validation sets.
+            y_train_k_pred = model_predict(model, X_train_k_tensor)
+            y_valid_k_pred = model_predict(model, X_valid_k_tensor)
 
-# Allocate space for CV
-# No need for training loss storage too but useful comparison
-mse_valid_mk = np.empty((n_degs, K))
-mse_train_mk = np.empty((n_degs, K))  # Indexed by model m, data partition k
+            # Get the classification error probability for the training dataset.
+            y_train_conf_mat = confusion_matrix(y_train_k, y_train_k_pred)
+            print(y_train_conf_mat)
+            y_train_correct_class_samples = np.sum(np.diag(y_train_conf_mat))
+            y_train_correct_tot_N = np.sum(y_train_conf_mat)
+            print("y_train_correct_class_samples Total Mumber of Misclassified Samples: {:d}".format(
+                y_train_correct_tot_N - y_train_correct_class_samples))
 
-# STEP 2: Try all polynomial orders between 1 (best line fit) and 21 (big time overfit) M=2
-for deg in degs:
-    # K-fold cross validation
-    k = 0
-    # NOTE that these subsets are of the TRAINING dataset
-    # Imagine we don't have enough data available to afford another entirely separate validation set
-    for train_indices, valid_indices in kf.split(X_train):
-        # Extract the training and validation sets from the K-fold split
-        X_train_k = X_train[train_indices]
-        y_train_k = y_train[train_indices]
-        X_valid_k = X_train[valid_indices]
-        y_valid_k = y_train[valid_indices]
+            y_train_prob_error = 1 - (y_train_correct_class_samples /
+                                      y_train_correct_tot_N)
+            print(
+                "y_train_correct_class_samples Empirically Estimated Probability of Error: {:.4f}".format(y_train_prob_error))
 
-        # Train model parameters
-        poly_train_features_cv = PolynomialFeatures(
-            degree=deg, include_bias=True)
-        X_train_k_poly = poly_train_features_cv.fit_transform(X_train_k)
-        theta_mk = mle_solution(X_train_k_poly, y_train_k)
+            # Get the classification error probability for the validation dataset.
+            y_valid_conf_mat = confusion_matrix(y_valid_k, y_valid_k_pred)
+            print(y_valid_conf_mat)
+            y_valid_correct_class_samples = np.sum(np.diag(y_valid_conf_mat))
+            y_valid_correct_tot_N = np.sum(y_valid_conf_mat)
+            print("y_valid_correct_class_samples Total Mumber of Misclassified Samples: {:d}".format(
+                y_valid_correct_tot_N - y_valid_correct_class_samples))
 
-        # Validation fold polynomial transformation
-        X_valid_k_poly = poly_train_features_cv.transform(X_valid_k)
+            y_valid_prob_error = 1 - (y_valid_correct_class_samples /
+                                      y_valid_correct_tot_N)
+            print(
+                "y_valid_correct_class_samples Empirically Estimated Probability of Error: {:.4f}".format(y_valid_prob_error))
 
-        # Make predictions on both the training and validation set
-        y_train_k_pred = X_train_k_poly.dot(theta_mk)
-        y_valid_k_pred = X_valid_k_poly.dot(theta_mk)
+            # Record classification error probabilities as well for this model and k-fold
+            mse_train_mk[n - 1, k] = y_train_prob_error
+            mse_valid_mk[n - 1, k] = y_valid_prob_error
 
-        # Record MSE as well for this model and k-fold
-        mse_train_mk[deg - 1, k] = mse(y_train_k_pred, y_train_k)
-        mse_valid_mk[deg - 1, k] = mse(y_valid_k_pred, y_valid_k)
-        k += 1
+            # Increment to the next k-fold
+            k += 1
 
-# STEP 3: Compute the average MSE loss for that model (based in this case on degree d)
-mse_train_m = np.mean(mse_train_mk, axis=1)  # Model average CV loss over folds
-mse_valid_m = np.mean(mse_valid_mk, axis=1)
+            #############################################################
+            # # Train model parameters
+            # poly_train_features_cv = PolynomialFeatures(
+            #     degree=deg, include_bias=True)
+            # X_train_k_poly = poly_train_features_cv.fit_transform(X_train_k)
+            # theta_mk = mle_solution(X_train_k_poly, y_train_k)
 
-# +1 as the index starts from 0 while the degrees start from 1
-optimal_d = np.argmin(mse_valid_m) + 1
-print("The model selected to best fit the data without overfitting is: d={}".format(optimal_d))
+            # # Validation fold polynomial transformation
+            # X_valid_k_poly = poly_train_features_cv.transform(X_valid_k)
+
+            # # Make predictions on both the training and validation set
+            # y_train_k_pred = X_train_k_poly.dot(theta_mk)
+            # y_valid_k_pred = X_valid_k_poly.dot(theta_mk)
+
+            # # Record MSE as well for this model and k-fold
+            # mse_train_mk[deg - 1, k] = mse(y_train_k_pred, y_train_k)
+            # mse_valid_mk[deg - 1, k] = mse(y_valid_k_pred, y_valid_k)
+            # k += 1
+            #############################################################
+
+    # STEP 3: Compute the average probability of error for that model (based in this case on number of perceptrons
+    # Model average CV loss over folds
+    mse_train_m = np.mean(mse_train_mk, axis=1)
+    mse_valid_m = np.mean(mse_valid_mk, axis=1)
+
+    print(mse_train_m)
+    print(mse_valid_m)
+
+    # +1 as the index starts from 0 while the degrees start from 1
+    optimal_d = np.argmin(mse_valid_m) + 1
+    print("The model selected to best fit the data without overfitting is: d={}".format(optimal_d))
 
 # STEP 4: Re-train using your optimally selected model (degree=3) and deploy!!
 # ...
+
 
 '''
 # Create coordinate matrices determined by the sample space
@@ -478,3 +518,8 @@ plt.show()
 # plt.legend()
 # plt.show()
 '''
+
+
+get_theoretically_optimal_classifier()
+exit()
+get_model_order_with_cross_validation()
