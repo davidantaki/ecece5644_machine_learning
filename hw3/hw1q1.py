@@ -237,6 +237,42 @@ def model_predict(model, data):
 
         return np.argmax(predicted_labels, 1)
 
+
+def eigvalsh_to_eps(spectrum, cond=None, rcond=None):
+    """Taken from scipy._multivariate
+    """
+    if rcond is not None:
+        cond = rcond
+    if cond in [None, -1]:
+        t = spectrum.dtype.char.lower()
+        factor = {'f': 1E3, 'd': 1E6}
+        cond = factor[t] * np.finfo(t).eps
+    eps = cond * np.max(abs(spectrum))
+    return eps
+
+
+def is_pos_def(x):
+    s, u = scipy.linalg.eigh(x, lower=True, check_finite=True)
+    eps = eigvalsh_to_eps(s, None, None)
+    if np.min(s) < -eps:
+        return False
+    return True
+
+
+def generate_pos_semidefinite_matrix():
+    # For generating valid covariance matrices
+    cov_mat = np.ones((3, 3))
+    while(True):
+        for i in range(3):
+            for j in range(3):
+                cov_mat[i, j] = random.uniform(-1, 1)
+
+        if is_pos_def(cov_mat):
+            break
+
+    print(cov_mat)
+    input()
+# generate_pos_semidefinite_matrix()
 ############################ Genarate Data from Gaussian Mixture Model ############################
 
 
