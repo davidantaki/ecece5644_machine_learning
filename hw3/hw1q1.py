@@ -1,6 +1,7 @@
 # Author: David Antaki
 
 # Widget to manipulate plots in Jupyter notebooks
+import random
 from torchsummary import summary
 import torch.nn.functional as F
 import torch.nn as nn
@@ -8,6 +9,7 @@ import torch
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix
 from scipy.stats import multivariate_normal as mvn
+import scipy
 import numpy as np
 import matplotlib.colors as mcol
 import matplotlib.pyplot as plt  # For general plotting
@@ -287,19 +289,18 @@ gmm_pdf['mean'] = np.array([[2, 2, 2],
                             [2, -2, 2],
                             [-2, 2, -2]])
 # Gaussian distributions covariance matrices
-gmm_pdf['cov'] = np.array([[[1, -0.5, 0.3],
-                            [-0.5, 1, -0.5],
-                            [0.3, -0.5, 1]],
-                           [[1, 0.3, -0.2],
-                            [0.3, 1, 0.3],
-                            [-0.2, 0.3, 1]],
-                           [[0.1, 0.4, 0.6],
-                            [0.1, 0.3, 0.3],
-                            [0.2, 0.1, 0.9]],
-                           [[0.8, 0.3, 0.3],
-                            [0.1, 0.123, 0.8],
-                            [0.7, 0.6, 0.4]]])
-
+gmm_pdf['cov'] = np.array([[[0.80945553, 0.80161658, 0.8204003],
+                            [-0.74074722, 0.97021266, - 0.0043638],
+                            [-0.18232703, 0.40816451, 0.9241849]],
+                           [[0.86490531, - 0.61466458, - 0.51610938],
+                            [-0.22176463, 0.92549909, - 0.20590192],
+                            [-0.19933607, - 0.58780676, 0.52270645]],
+                           [[0.67062215,  0.54339883, 0.04097537],
+                            [-0.14566282, 0.22466556, -0.62886916],
+                            [0.06434953, -0.13475077, 0.58643072]],
+                           [[0.8952883, 0.56810939, 0.032766],
+                            [0.32891856, 0.93071298, 0.41149179],
+                            [-0.02098863, -0.31924666, 0.42317104]]])
 
 # 4 classes
 Gs = [
@@ -361,6 +362,7 @@ plt.legend()
 
 
 ############################ Theoretically Optimal Classifier ############################
+# Aiming for the MAP classifier to achieve between 10% and 20% probability of error
 def get_theoretically_optimal_classifier():
     # If 0-1 loss then yield MAP decision rule, else ERM classifier
     Lambda = np.ones((C, C)) - np.eye(C)
