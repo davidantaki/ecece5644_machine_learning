@@ -135,13 +135,16 @@ gmm_pdf['unit_variance'] = np.identity(n)*alpha
 # Draw N_train iid samples of n-dimensional samples of random variable x
 X_train_x = create_data_no_labels(
     gmm_pdf['mean_mu'], gmm_pdf['cov_sigma'], N_train)
+assert(X_train_x.shape == (N_train, n))
 # print(X_train_x.shape)
 # Draw N_train iid samples of n-dimensional samples of randomal variable z from 0-mean alpha*I-covariance-matrix
 X_train_z = create_data_no_labels(
     gmm_pdf['0_mean'], gmm_pdf['alpha_I_cov'], N_train)
+assert(X_train_z.shape == (N_train, n))
 # print(X_train_z.shape)
 # Draw N_train iid samples of a scalar random variable v from a 0-mean unit-variance Gaussian pdf.
 X_train_v = np.random.normal(size=(N_train, 1))
+assert(X_train_v.shape == (N_train, 1))
 # Calculate scalar values of a new random variable
 Y_train = np.empty((N_train, 1))
 for i in range(0, N_train):
@@ -153,13 +156,16 @@ assert(Y_train.shape == (N_train, 1))
 # Generate test dataset in same manner as above
 X_test_x = create_data_no_labels(
     gmm_pdf['mean_mu'], gmm_pdf['cov_sigma'], N_test)
+assert(X_test_x.shape == (N_test, n))
 # print(X_test_x.shape)
 # Draw N_test iid samples of n-dimensional samples of randomal variable z from 0-mean alpha*I-covariance-matrix
 X_test_z = create_data_no_labels(
     gmm_pdf['0_mean'], gmm_pdf['alpha_I_cov'], N_test)
+assert(X_test_z.shape == (N_test, n))
 # print(X_test_z.shape)
 # Draw N_test iid samples of a scalar random variable v from a 0-mean unit-variance Gaussian pdf.
 X_test_v = np.random.normal(size=(N_test, 1))
+assert(X_test_v.shape == (N_test, 1))
 # Calculate scalar values of a new random variable
 Y_test = np.empty((N_test, 1))
 for i in range(0, N_test):
