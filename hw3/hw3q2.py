@@ -1,4 +1,11 @@
+'''
+Author: David Antaki
+Date: 6/15/22
+'''
+
 import random
+from time import perf_counter, time
+from tracemalloc import start
 from torchsummary import summary
 import torch.nn.functional as F
 import torch.nn as nn
@@ -87,7 +94,7 @@ def create_data_no_labels(mean, cov, N):
 
 
 # HyperParameters
-alpha = 0.4
+hyper_alpha = 0.1
 
 
 ############################# END HYPERPARAMETERS #############################
@@ -137,8 +144,8 @@ gmm_pdf['cov_sigma'] = np.array([[0.94497952, - 0.42082568, - 0.99666439,  0.185
                                   - 0.54095705,  0.57027545,  0.87881248, - 0.32184057],
                                  [-0.37096964,  0.41427894,  1.0008154, - 0.18752859, 0.9452789, - 0.09515098,
                                   0.96050796, - 0.9039707, - 0.32184057, 0.9527596]])
-gmm_pdf['alpha_I_cov'] = np.identity(n)*alpha
-gmm_pdf['unit_variance'] = np.identity(n)*alpha
+gmm_pdf['alpha_I_cov'] = np.identity(n)*hyper_alpha
+gmm_pdf['unit_variance'] = np.identity(n)*hyper_alpha
 
 ############ Generate training data of (X_train_x, Y_train) pairs ############
 # Draw N_train iid samples of n-dimensional samples of random variable x
@@ -199,13 +206,20 @@ def mse(y_preds, y_true):
     return np.mean(error ** 2)
 
 
-def hyper_parameter_optimization():
+def hyper_parameter_optimization(alpha: float) -> float:
     '''Here we perform Cross Validation to decide on the best number of perceptrons to use in our MLP.
     Returns the optimal beta value.
     '''
+    start_time = perf_counter()
+
+    num_of_betas = 10000
     # Range of betas we will try
-    n_betas = np.arange(1, 10000, 1)
-    max_n_betas = np.max(n_betas)
+    # On the order of 10^-9 to 10^4
+    n_betas = np.logspace(-9, 8, num=num_of_betas, base=10.0)
+    # n_betas = np.linspace(10e-9, 10e4, num=num_of_betas)
+    print(n_betas)
+    # n_betas = np.arange(1e-9, 0, 0.0001)
+    # np.max(n_betas)
 
     # Number of folds for CV
     K = 5
@@ -216,15 +230,15 @@ def hyper_parameter_optimization():
 
     # Allocate space for CV
     # No need for training loss storage too but useful comparison
-    mse_valid_mk = np.empty((max_n_betas, K))
+    mse_valid_mk = np.empty((num_of_betas, K))
     # Indexed by model m, data partition k
-    mse_train_mk = np.empty((max_n_betas, K))
+    mse_train_mk = np.empty((num_of_betas, K))
 
     # Linear regression
     deg = 1
 
     # STEP 2: Try all polynomial orders between 1 (best line fit) and 21 (big time overfit) M=2
-    for beta in n_betas:
+    for beta_i in range(0, num_of_betas):
         # K-fold cross validation
         k = 0
         # NOTE that these subsets are of the TRAINING dataset
@@ -240,7 +254,8 @@ def hyper_parameter_optimization():
             poly_train_features_cv = PolynomialFeatures(
                 degree=deg, include_bias=True)
             X_train_k_poly = poly_train_features_cv.fit_transform(X_train_k)
-            weights_mk = mle_solution_map(X_train_k_poly, y_train_k, beta)
+            weights_mk = mle_solution_map(
+                X_train_k_poly, y_train_k, n_betas[beta_i])
 
             # Validation fold polynomial transformation
             X_valid_k_poly = poly_train_features_cv.transform(X_valid_k)
@@ -250,70 +265,9 @@ def hyper_parameter_optimization():
             y_valid_k_pred = X_valid_k_poly.dot(weights_mk)
 
             # Record MSE as well for this model and k-fold
-            mse_train_mk[beta-1, k] = mse(y_train_k_pred, y_train_k)
-            mse_valid_mk[beta-1, k] = mse(y_valid_k_pred, y_valid_k)
+            mse_train_mk[beta_i, k] = mse(y_train_k_pred, y_train_k)
+            mse_valid_mk[beta_i, k] = mse(y_valid_k_pred, y_valid_k)
             k += 1
-
-            # input_dim = X_train_k.shape[1]
-            # model = TwoLayerMLP(input_dim, n, output_dim)
-            # # Visualize network architecture
-            # print(model)
-
-            # # Stochastic GD with learning rate and momentum hyperparameters
-            # optimizer = torch.optim.SGD(
-            #     model.parameters(), lr=0.01, momentum=0.9)
-            # # The nn.CrossEntropyLoss() loss function automatically performs a log_softmax() to
-            # # the output when validating, on top of calculating the negative log-likelihood using
-            # # nn.NLLLoss(), while also being more stable numerically... So don't implement from scratch
-            # criterion = nn.CrossEntropyLoss()
-            # num_epochs = 100
-
-            # # Convert numpy structures to PyTorch tensors, as these are the data types required by the library
-            # X_train_k_tensor = torch.FloatTensor(X_train_k)
-            # y_train_k_tensor = torch.LongTensor(y_train_k)
-            # X_valid_k_tensor = torch.FloatTensor(X_valid_k)
-            # y_valid_k_tensor = torch.LongTensor(y_valid_k)
-
-            # # Train the model
-            # model = model_train(model, X_train_k_tensor, y_train_k_tensor, criterion,
-            #                     optimizer, num_epochs=num_epochs)
-
-            # # Using the trained model get the predicted classifications/labels from the test and validation sets.
-            # y_train_k_pred = model_predict(model, X_train_k_tensor)
-            # y_valid_k_pred = model_predict(model, X_valid_k_tensor)
-
-            # # Get the classification error probability for the training dataset.
-            # y_train_conf_mat = confusion_matrix(y_train_k, y_train_k_pred)
-            # print(y_train_conf_mat)
-            # y_train_correct_class_samples = np.sum(np.diag(y_train_conf_mat))
-            # y_train_correct_tot_N = np.sum(y_train_conf_mat)
-            # print("y_train_correct_class_samples Total Mumber of Misclassified Samples: {:d}".format(
-            #     y_train_correct_tot_N - y_train_correct_class_samples))
-
-            # y_train_prob_error = 1 - (y_train_correct_class_samples /
-            #                           y_train_correct_tot_N)
-            # print(
-            #     "y_train_correct_class_samples Empirically Estimated Probability of Error: {:.4f}".format(y_train_prob_error))
-
-            # # Get the classification error probability for the validation dataset.
-            # y_valid_conf_mat = confusion_matrix(y_valid_k, y_valid_k_pred)
-            # print(y_valid_conf_mat)
-            # y_valid_correct_class_samples = np.sum(np.diag(y_valid_conf_mat))
-            # y_valid_correct_tot_N = np.sum(y_valid_conf_mat)
-            # print("y_valid_correct_class_samples Total Mumber of Misclassified Samples: {:d}".format(
-            #     y_valid_correct_tot_N - y_valid_correct_class_samples))
-
-            # y_valid_prob_error = 1 - (y_valid_correct_class_samples /
-            #                           y_valid_correct_tot_N)
-            # print(
-            #     "y_valid_correct_class_samples Empirically Estimated Probability of Error: {:.4f}".format(y_valid_prob_error))
-
-            # # Record classification error probabilities as well for this model and k-fold
-            # mse_train_mk[n - 1, k] = y_train_prob_error
-            # mse_valid_mk[n - 1, k] = y_valid_prob_error
-
-            # # Increment to the next k-fold
-            # k += 1
 
     # STEP 3: Compute the average probability of error for that model (based in this case on number of perceptrons
     # Model average CV loss over folds
@@ -325,29 +279,36 @@ def hyper_parameter_optimization():
 
     # Graph probability of error vs number of perceptrons
     fig, ax = plt.subplots(figsize=(10, 10))
+    ax.set_xscale('log')
+    ax.set_yscale('log')
     ax.plot(n_betas, mse_train_m, color="b",
             marker="s", label=r"$D_{train}$")
     ax.plot(n_betas, mse_valid_m, color="r",
             marker="x", label=r"$D_{valid}$")
-
-    # Use logarithmic y-scale as MSE values get very large
-    # ax.set_yscale('log')
-    # Force x-axis for degrees to be integer
-    # ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-
     ax.legend(loc='upper left', shadow=True)
     plt.xlabel("Beta Hyperparameter")
     plt.ylabel("MSE")
-    plt.title(
-        "MSE vs Beta Hyperparameter")
-    plt.show()
+    plt.suptitle(
+        "MSE vs Beta Hyperparameter with alpha={}".format(alpha))
+    plt.title("Time Taken: {}".format(perf_counter() - start_time))
+    # plt.show()
+    try:
+        plt.savefig("MSE vs Beta Hyperparameter with alpha={}.png".format(alpha), dpi=300)
+        print("Saved plot to file.")
+    except:
+        print("Failed to save plot to file.")
 
     # +1 as the index starts from 0 while the beta values start from 1
-    optimal_beta = np.argmin(mse_valid_m) + 1
-    print("The model selected to best fit the data without overfitting is: beta={}".format(optimal_beta))
+    optimal_beta = n_betas[np.argmin(mse_valid_m)]
+    print("The model selected to best fit the data without overfitting is: beta={}".format(
+        optimal_beta))
 
     return optimal_beta
 
 
-print(hyper_parameter_optimization())
-# cross_val_score()
+def main():
+    print(hyper_parameter_optimization(hyper_alpha))
+
+
+if __name__ == '__main__':
+    main()
