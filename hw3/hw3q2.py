@@ -12,7 +12,18 @@ import numpy as np
 import matplotlib.colors as mcol
 import matplotlib.pyplot as plt  # For general plotting
 from sys import float_info  # Threshold smallest positive floating value
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, cross_val_score
+from math import ceil, floor
+
+import matplotlib.pyplot as plt  # For general plotting
+import matplotlib.colors as mcol
+from matplotlib.ticker import MaxNLocator
+
+import numpy as np
+
+from scipy.stats import multivariate_normal as mvn
+from sklearn.preprocessing import PolynomialFeatures  # Important new include
+from sklearn.model_selection import KFold  # Important new include
 
 
 def eigvalsh_to_eps(spectrum, cond=None, rcond=None):
@@ -61,7 +72,7 @@ def generate_pos_semidefinite_matrix(n_dims):
 
 
 # print(generate_pos_semidefinite_matrix(10))
-print(sklearn.datasets.make_spd_matrix(10))
+# print(sklearn.datasets.make_spd_matrix(10))
 
 
 def create_data_no_labels(mean, cov, N):
@@ -69,7 +80,7 @@ def create_data_no_labels(mean, cov, N):
     # The mvn has to be in a list to generate correct number of dimensions of data from .rvs(), not sure way.
     Gs = [mvn(mean=mean, cov=cov)]
     # N_train samples of n-dimensional samples of random variable x
-    X = np.concatenate([G.rvs(size=N_train) for G in Gs])
+    X = np.concatenate([G.rvs(size=N) for G in Gs])
     # Will return an X of shape (1, N)
     return X
 
@@ -86,16 +97,7 @@ alpha = 0.4
 
 # Data
 # Arbitrary non-zero n-dimensional vector 'a'
-vector_a = np.array([[-6,   2,  -9,   9,   6,   4,  -9,   1,  -4,  -2, ],
-                     [-2,   4,  -1,   2, -10,  -5,   8,   0,   9,   0, ],
-                     [-1,   4, -10,  -4,   7,  -2,  -1,  -6,   8,  -4, ],
-                     [-8,   0,   3,   8,  -8,   9,   1,   2,   2,   2, ],
-                     [-1,  -7,   7,   2,   9,  -5,  -1,   3,   1,  -5, ],
-                     [-5,   1,   8,   6,   4,   8,  -4,   6,  -6,   5, ],
-                     [-6,   4,  -8,  -1,   5,   9,  -7,  -1,   0,   3, ],
-                     [-9,  -5,   8,   0,   3,   9,   3,  -1,  -7,  -1, ],
-                     [9,   2,   6,  -4,   3,   2,   7,  -9,  -9,  -9, ],
-                     [5,   1,   0,   1,  -2,   1,   5, -10,   8,   9, ]])
+vector_a = np.array([-6,   2,  -9,   9,   6,   4,  -9,   1,  -4,  -2])
 
 gmm_pdf = {}
 # Class priors
@@ -132,14 +134,32 @@ gmm_pdf['unit_variance'] = np.identity(n)*alpha
 # Draw N_train iid samples of n-dimensional samples of random variable x
 X_train_x = create_data_no_labels(
     gmm_pdf['mean_mu'], gmm_pdf['cov_sigma'], N_train)
-print(X_train_x.shape)
+# print(X_train_x.shape)
 # Draw N_train iid samples of n-dimensional samples of randomal variable z from 0-mean alpha*I-covariance-matrix
 X_train_z = create_data_no_labels(
     gmm_pdf['0_mean'], gmm_pdf['alpha_I_cov'], N_train)
-print(X_train_z.shape)
+# print(X_train_z.shape)
 # Draw N_train iid samples of a scalar random variable v from a 0-mean unit-variance Gaussian pdf.
-X_train_v = np.random.normal(size=N_train)
-# Scalar values of a new random variable
+X_train_v = np.random.normal(size=(N_train, 1))
+# Calculate scalar values of a new random variable
+Y_train = (vector_a.T*(X_train_x+X_train_z))+X_train_v
+# print(Y_train.shape)
 
+# Above is training data of (X_train_x, Y_train) pairs
+
+# Generate test dataset in same manner as above
+X_test_x = create_data_no_labels(
+    gmm_pdf['mean_mu'], gmm_pdf['cov_sigma'], N_test)
+# print(X_test_x.shape)
+# Draw N_test iid samples of n-dimensional samples of randomal variable z from 0-mean alpha*I-covariance-matrix
+X_test_z = create_data_no_labels(
+    gmm_pdf['0_mean'], gmm_pdf['alpha_I_cov'], N_test)
+# print(X_test_z.shape)
+# Draw N_test iid samples of a scalar random variable v from a 0-mean unit-variance Gaussian pdf.
+X_test_v = np.random.normal(size=(N_test, 1))
+# Calculate scalar values of a new random variable
+Y_test = (vector_a.T*(X_test_x+X_test_z))+X_test_v
+print(Y_test.shape)
+# Above is testing data of (X_test_x, Y_test) pairs
 
 ############################# END GENERATE DATA #############################
