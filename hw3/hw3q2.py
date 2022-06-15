@@ -97,7 +97,10 @@ alpha = 0.4
 
 # Data
 # Arbitrary non-zero n-dimensional vector 'a'
-vector_a = np.array([-6,   2,  -9,   9,   6,   4,  -9,   1,  -4,  -2])
+# vector_a = np.array([-6,   2,  -9,   9,   6,   4,  -9,   1,  -4,  -2])
+vector_a = np.array([[-6], [2],  [-9],   [9],   [6],
+                    [4],  [-9],   [1],  [-4],  [-2]])
+assert(vector_a.T.shape == (1, n))
 
 gmm_pdf = {}
 # Class priors
