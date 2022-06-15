@@ -131,6 +131,7 @@ gmm_pdf['cov_sigma'] = np.array([[0.94497952, - 0.42082568, - 0.99666439,  0.185
 gmm_pdf['alpha_I_cov'] = np.identity(n)*alpha
 gmm_pdf['unit_variance'] = np.identity(n)*alpha
 
+############ Generate training data of (X_train_x, Y_train) pairs ############
 # Draw N_train iid samples of n-dimensional samples of random variable x
 X_train_x = create_data_no_labels(
     gmm_pdf['mean_mu'], gmm_pdf['cov_sigma'], N_train)
@@ -142,11 +143,13 @@ X_train_z = create_data_no_labels(
 # Draw N_train iid samples of a scalar random variable v from a 0-mean unit-variance Gaussian pdf.
 X_train_v = np.random.normal(size=(N_train, 1))
 # Calculate scalar values of a new random variable
-Y_train = (vector_a.T*(X_train_x+X_train_z))+X_train_v
-# print(Y_train.shape)
+Y_train = np.empty((N_train, 1))
+for i in range(0, N_train):
+    Y_train[i] = vector_a.T.dot(X_train_x[i]+X_train_z[i])+X_train_v[i]
+assert(Y_train.shape == (N_train, 1))
+############ END Generate training data of (X_train_x, Y_train) pairs ############
 
-# Above is training data of (X_train_x, Y_train) pairs
-
+############# Generate testing data of (X_test_x, Y_test) pairs############
 # Generate test dataset in same manner as above
 X_test_x = create_data_no_labels(
     gmm_pdf['mean_mu'], gmm_pdf['cov_sigma'], N_test)
@@ -158,9 +161,11 @@ X_test_z = create_data_no_labels(
 # Draw N_test iid samples of a scalar random variable v from a 0-mean unit-variance Gaussian pdf.
 X_test_v = np.random.normal(size=(N_test, 1))
 # Calculate scalar values of a new random variable
-Y_test = (vector_a.T*(X_test_x+X_test_z))+X_test_v
-print(Y_test.shape)
-# Above is testing data of (X_test_x, Y_test) pairs
+Y_test = np.empty((N_test, 1))
+for i in range(0, N_test):
+    Y_test[i] = vector_a.T.dot(X_test_x[i]+X_test_z[i])+X_test_v[i]
+assert(Y_test.shape == (N_test, 1))
+############# END Generate testing data of (X_test_x, Y_test) pairs############
 
 ############################# END GENERATE DATA #############################
 
