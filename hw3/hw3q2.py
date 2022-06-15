@@ -206,7 +206,7 @@ def mse(y_preds, y_true):
     return np.mean(error ** 2)
 
 
-def hyper_parameter_optimization(alpha: float) -> float:
+def beta_hyperparameter_optimization(alpha: float) -> float:
     '''Here we perform Cross Validation to decide on the best number of perceptrons to use in our MLP.
     Returns the optimal beta value.
     '''
@@ -307,7 +307,7 @@ def hyper_parameter_optimization(alpha: float) -> float:
 
 
 def main():
-    print(hyper_parameter_optimization(hyper_alpha))
+    print(beta_hyperparameter_optimization(hyper_alpha))
 
 
 if __name__ == '__main__':
