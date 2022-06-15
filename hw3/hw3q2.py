@@ -83,6 +83,14 @@ def create_data_no_labels(mean, cov, N):
     X = np.concatenate([G.rvs(size=N) for G in Gs])
     # Will return an X of shape (1, N)
     return X
+############################# HYPERPARAMETERS #############################
+
+
+# HyperParameters
+alpha = 0.4
+
+
+############################# END HYPERPARAMETERS #############################
 
 ############################# GENERATE DATA #############################
 
@@ -92,8 +100,6 @@ n = 10
 # Number of samples
 N_train = 50
 N_test = 1000
-# Parameters
-alpha = 0.4
 
 # Data
 # Arbitrary non-zero n-dimensional vector 'a'
