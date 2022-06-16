@@ -90,7 +90,6 @@ def create_data_no_labels(mean, cov, N):
     return np.abs(X)
 
 
-
 # Number of dimensions
 n = 10
 # Number of samples
@@ -126,6 +125,7 @@ gmm_pdf['cov_sigma'] = np.array([[0.94497952, - 0.42082568, - 0.99666439,  0.185
                                 [-0.37096964,  0.41427894,  1.0008154, - 0.18752859, 0.9452789, - 0.09515098,
                                 0.96050796, - 0.9039707, - 0.32184057, 0.9527596]])
 
+
 def generate_data(hyper_alpha: float):
     global X_train_x
     global X_train_x_bias
@@ -141,7 +141,6 @@ def generate_data(hyper_alpha: float):
     vector_a = np.array([[6], [2],  [9],   [9],   [6],
                         [4],  [9],   [1],  [4],  [2]])
     assert(vector_a.T.shape == (1, n))
-
 
     # Mean and covariance of data pdfs conditioned on labels
     # Gaussian distributions means
@@ -225,34 +224,33 @@ def add_bias_term(X):
 
 
 def negative_2_times_log_likelihood(y_true, y_pred):
-    '''
-
-    '''
     assert y_true.shape == y_pred.shape
     # log_likelihood_elements = np.empty(y_true.shape)
     # print(log_likelihood_elements.shape)
     # for i in (range(0, y_true.shape[0])):
     # log_likelihood_elements[i] = y_true[i] * \
     #     np.log(y_pred[i]) + (1-y_true[i])*np.log(1-y_pred[i])
-    log_likelihood_elements =  y_true * \
+    log_likelihood_elements = y_true * \
         np.log(y_pred) + (1-y_true)*np.log(1-y_pred)
     return -2*np.sum(log_likelihood_elements)/len(y_true)
 
 # Negative Log Likelihood (NLL) loss
+
+
 def nll_loss(parameters, X, y, sigma=1):
     mu_pred = X.dot(parameters)
-    
+
     # Compute log-likelihood function, setting mu=0 as we're estimating it
     log_lld = np.sum(mvn.pdf(y - mu_pred, 0, sigma))
-    
+
     # Return NLL
     return -log_lld
+
 
 def beta_hyperparameter_optimization(alpha) -> float:
     '''Here we perform Cross Validation to decide on the best number of perceptrons to use in our MLP.
     Returns the optimal beta value.
     '''
-    start_time = perf_counter()
 
     num_of_betas = 100
     # Range of betas we will try
@@ -310,43 +308,26 @@ def beta_hyperparameter_optimization(alpha) -> float:
     # print(mse_train_m)
     # print(mse_valid_m)
 
-
-
     # +1 as the index starts from 0 while the beta values start from 1
     optimal_beta = n_betas[np.argmin(mse_valid_m)]
     print("The beta selected to best fit the data without overfitting is beta={} with alpha={}".format(
         optimal_beta, alpha))
 
-    # Graph MSE vs betas    
-    ax.set_xscale('log')
-    ax.set_yscale('log')
+    # Graph MSE vs betas
     # plt.xticks(np.logspace(-9, 8, num=20, base=10.0))
     # plt.yticks(np.arange(0, max(y), 2))
-    ax.plot(n_betas, mse_train_m, color="b",
-            marker="s", label=r"$D_{train}$")
-    ax.plot(n_betas, mse_valid_m, color="r",
-            marker="x", label=r"$D_{valid}$")
-    ax.legend(loc='upper left', shadow=True)
-    plt.xlabel("Beta Hyperparameter")
-    plt.ylabel("MSE")
-    plt.suptitle(
-        "MSE vs Beta Hyperparameter with alpha={}".format(alpha))
-    plt.title("Time Taken (s): {}\nNum. of Betas tested: {}\nOptimal Beta (minimizes MSE): {}".format(
-        perf_counter() - start_time, num_of_betas, optimal_beta))
-    plt.grid()
-    # plt.show()
-    # try:
-    # plt.savefig("{}-MSE vs Beta Hyperparameter with alpha={}.png".format(
-    #     datetime.now().strftime("%Y-%d-%m-%H-%M"), alpha), dpi=300)
-    # print("Saved plot to file.")
-    # except :
-    # print("Failed to save plot to file.")
+    # ax.plot(n_betas, mse_train_m, color="b",
+    #         marker="s", label=r"$D_{train}$")
+    ax.plot(n_betas, mse_valid_m,
+            marker="x", label=r"alpha={}".format(alpha))
 
     return optimal_beta
 
 
 def optimize_model_params(opt_beta: float):
     '''
+    Trains model with given optimal beta value.
+    Returns MSE of how well the model fits the data using the test data.
     '''
     # Train model parameters on entire training dataset
     poly_train_features_cv = PolynomialFeatures(
@@ -359,8 +340,9 @@ def optimize_model_params(opt_beta: float):
     y_test_pred = X_test_x_bias.dot(weights_mk)
 
     # Get the -2 times log likelihood
-    print(negative_2_times_log_likelihood(Y_test, y_test_pred))
-    input()
+
+    return mse(y_test_pred, Y_test)
+    # print(negative_2_times_log_likelihood(Y_test, y_test_pred))
 
 
 def main():
@@ -370,10 +352,37 @@ def main():
     for a in alphas:
         a = a*np.trace(gmm_pdf['cov_sigma'])/n
     # print(alphas)
+    # Space for storing NLL scores i.e. how well a model fit the test data with the given alpha hyperparam.
+    nll_alpha = np.empty((len(alphas), 1))
+    print(nll_alpha.shape)
+    i = 0
     for a in alphas:
         generate_data(a)
         opt_beta = beta_hyperparameter_optimization(a)
-        # optimize_model_params(opt_beta)
+        nll_alpha[i] = optimize_model_params(opt_beta)
+        i = i+1
+
+    # For the MSE vs betas
+    ax.legend(loc='lower right', shadow=True)
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    plt.xlabel("Beta Hyperparameter")
+    plt.ylabel("MSE")
+    plt.title("MSE vs Beta Hyperparameter")
+    plt.grid()
+    # plt.show()
+    plt.savefig("{}-MSE vs Beta Hyperparameter.png".format(
+        datetime.now().strftime("%Y-%d-%m-%H-%M")), dpi=300)
+    # Plot NLL scores vs Alpha.
+    fig2, ax2 = plt.subplots(figsize=(10, 10))
+    ax2.set_xscale('log')
+    ax2.plot(nll_alpha, alphas, color="b",
+            marker="s", label=r"$D_{test}$")
+    ax2.legend(loc='upper left', shadow=True)
+    plt.xlabel("Alpha Hyperparameter")
+    plt.ylabel("MSE")
+    plt.title("MSE of Test Dataset vs Alpha")
+    plt.grid()
     plt.show()
 
 
