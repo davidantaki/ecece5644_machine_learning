@@ -383,6 +383,8 @@ def main():
     plt.ylabel("MSE")
     plt.title("MSE of Test Dataset vs Alpha")
     plt.grid()
+    plt.savefig("{}-MSE of Test Dataset vs Alpha.png".format(
+        datetime.now().strftime("%Y-%d-%m-%H-%M")), dpi=300)
     plt.show()
 
 
