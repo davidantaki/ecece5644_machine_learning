@@ -599,20 +599,18 @@ def main():
     # For storing how well the trained models did on the test set per each number of n_train
     p_errors = []
     # p_errors = [0.5,0.5,0.5,0.5,0.5,0.5]
-    p_errors = [0.026575000000000015, 0.023552499999999978, 0.02250000000000001,
-                0.021695000000000022, 0.02142999999999995, 0.021257500000000042]
     for n in n_train:
         # plot_train_data()
         # plot_test_data()
         generate_data(n)
         # get_theoretically_optimal_classifier(n)
-        # optimal_p.append(get_model_order_with_cross_validation(n))
-        # p_errors.append(train_model_with_optimal_num_perceptrons(n))
+        optimal_p.append(get_model_order_with_cross_validation(n))
+        p_errors.append(train_model_with_optimal_num_perceptrons(n))
 
     # Print the optimal number of perceptrons for each n_train
-    # for i in range(0, len(n_train)):
-    #     print("n_train: {}\toptimal_n_p: {}\tp_error: {}".format(
-    #         n_train[i], optimal_p[i], p_errors[i]))
+    for i in range(0, len(n_train)):
+        print("n_train: {}\toptimal_n_p: {}\tp_error: {}".format(
+            n_train[i], optimal_p[i], p_errors[i]))
 
     # Graph
     # Graph probability of error vs number of perceptrons
