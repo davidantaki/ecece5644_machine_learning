@@ -278,50 +278,58 @@ def generate_pos_semidefinite_matrix():
 ############################ Genarate Data from Gaussian Mixture Model ############################
 
 
-# Data
-gmm_pdf = {}
-# Class priors
-gmm_pdf['priors'] = np.array([0.5, 0.5, 0.5, 0.5])
-# Mean and covariance of data pdfs conditioned on labels
-# Gaussian distributions means
-gmm_pdf['mean'] = np.array([[2, 2, 2],
-                            [-2, -2, -2],
-                            [2, -2, 2],
-                            [-2, 2, -2]])
-# Gaussian distributions covariance matrices
-gmm_pdf['cov'] = np.array([[[0.80945553, 0.80161658, 0.8204003],
-                            [-0.74074722, 0.97021266, - 0.0043638],
-                            [-0.18232703, 0.40816451, 0.9241849]],
-                           [[0.86490531, - 0.61466458, - 0.51610938],
-                            [-0.22176463, 0.92549909, - 0.20590192],
-                            [-0.19933607, - 0.58780676, 0.52270645]],
-                           [[0.67062215,  0.54339883, 0.04097537],
-                            [-0.14566282, 0.22466556, -0.62886916],
-                            [0.06434953, -0.13475077, 0.58643072]],
-                           [[0.8952883, 0.56810939, 0.032766],
-                            [0.32891856, 0.93071298, 0.41149179],
-                            [-0.02098863, -0.31924666, 0.42317104]]])
+def generate_data(n_train):
+    global X_train
+    global y_train
+    global X_test
+    global y_test
+    global C
+    global gmm_pdf
+    global Gs
 
-# 4 classes
-Gs = [
-    mvn(mean=gmm_pdf['mean'][0], cov=gmm_pdf['cov'][0]),
-    mvn(mean=gmm_pdf['mean'][1], cov=gmm_pdf['cov'][1]),
-    mvn(mean=gmm_pdf['mean'][2], cov=gmm_pdf['cov'][2]),
-    mvn(mean=gmm_pdf['mean'][3], cov=gmm_pdf['cov'][3])
-]
+    # Data
+    gmm_pdf = {}
+    # Class priors
+    gmm_pdf['priors'] = np.array([0.5, 0.5, 0.5, 0.5])
+    # Mean and covariance of data pdfs conditioned on labels
+    # Gaussian distributions means
+    gmm_pdf['mean'] = np.array([[2, 2, 2],
+                                [-2, -2, -2],
+                                [2, -2, 2],
+                                [-2, 2, -2]])
+    # Gaussian distributions covariance matrices
+    gmm_pdf['cov'] = np.array([[[0.80945553, 0.80161658, 0.8204003],
+                                [-0.74074722, 0.97021266, - 0.0043638],
+                                [-0.18232703, 0.40816451, 0.9241849]],
+                            [[0.86490531, - 0.61466458, - 0.51610938],
+                                [-0.22176463, 0.92549909, - 0.20590192],
+                                [-0.19933607, - 0.58780676, 0.52270645]],
+                            [[0.67062215,  0.54339883, 0.04097537],
+                                [-0.14566282, 0.22466556, -0.62886916],
+                                [0.06434953, -0.13475077, 0.58643072]],
+                            [[0.8952883, 0.56810939, 0.032766],
+                                [0.32891856, 0.93071298, 0.41149179],
+                                [-0.02098863, -0.31924666, 0.42317104]]])
+    # 4 classes
+    Gs = [
+        mvn(mean=gmm_pdf['mean'][0], cov=gmm_pdf['cov'][0]),
+        mvn(mean=gmm_pdf['mean'][1], cov=gmm_pdf['cov'][1]),
+        mvn(mean=gmm_pdf['mean'][2], cov=gmm_pdf['cov'][2]),
+        mvn(mean=gmm_pdf['mean'][3], cov=gmm_pdf['cov'][3])
+    ]
 
-# Number of classes
-C = 4
-# Possible Labels
-L = np.array(range(C))
-# Number of samples per component for the training dataset
-N = 100
-# Total number of training samples
-tot_N = N*C
-# Number of samples for the test dataset
-N_test = 100000
-X_train, y_train = create_data(N)
-X_test, y_test = create_data(N_test)
+    # Number of classes
+    C = 4
+    # Possible Labels
+    L = np.array(range(C))
+    # Number of samples per component for the training dataset
+    N = n_train
+    # Total number of training samples
+    tot_N = N*C
+    # Number of samples for the test dataset
+    N_test = 100000
+    X_train, y_train = create_data(N)
+    X_test, y_test = create_data(N_test)
 
 
 def plot_train_data():
@@ -367,7 +375,7 @@ def plot_test_data():
 
 ############################ Theoretically Optimal Classifier ############################
 # Aiming for the MAP classifier to achieve between 10% and 20% probability of error
-def get_theoretically_optimal_classifier():
+def get_theoretically_optimal_classifier(n_train):
     # If 0-1 loss then yield MAP decision rule, else ERM classifier
     Lambda = np.ones((C, C)) - np.eye(C)
 
@@ -375,29 +383,29 @@ def get_theoretically_optimal_classifier():
     decisions = perform_erm_classification(X_test, Lambda, gmm_pdf, C)
 
     # Simply using sklearn confusion matrix
-    print("Confusion Matrix For Theoretically Optimal Classifier (rows: Predicted class, columns: True class):")
+    # print("Confusion Matrix For Theoretically Optimal Classifier (rows: Predicted class, columns: True class):")
     conf_mat = confusion_matrix(decisions, y_test)
-    print(conf_mat)
+    # print(conf_mat)
 
     correct_class_samples = np.sum(np.diag(conf_mat))
-    print("Total Mumber of Misclassified Samples: {:d}".format(
-        np.sum(conf_mat) - correct_class_samples))
+    # print("Total Mumber of Misclassified Samples: {:d}".format(
+        # np.sum(conf_mat) - correct_class_samples))
 
     prob_error = 1 - (correct_class_samples / np.sum(conf_mat))
     print(
-        "Empirically Estimated Probability of Error: {:.4f}".format(prob_error))
+        "Empirically Estimated Probability of Error for {} number of samples: {:.4f}".format(n_train, prob_error))
 
 ############################ END Theoretically Optimal Classifier ############################
 
 ################## Model Order Selection using Cross Validation ##################
 
 
-def get_model_order_with_cross_validation():
+def get_model_order_with_cross_validation(n_train):
     '''Here we perform Cross Validation to decide on the best number of perceptrons to use in our MLP.
     Returns the optimal number of perceptrons to use.
     '''
     # Range of perceptrons we will try
-    n_perceptrons = np.arange(1, 100, 1)
+    n_perceptrons = np.arange(1, 50, 1)
     max_n_perceptrons = np.max(n_perceptrons)
 
     # Number of folds for CV
@@ -413,7 +421,7 @@ def get_model_order_with_cross_validation():
     # Indexed by model m, data partition k
     mse_train_mk = np.empty((max_n_perceptrons, K))
 
-    # STEP 2: Try all polynomial orders between 1 (best line fit) and 21 (big time overfit) M=2
+    # STEP 2: Try all number of perceptons
     for n in n_perceptrons:
         # K-fold cross validation
         k = 0
@@ -458,29 +466,29 @@ def get_model_order_with_cross_validation():
 
             # Get the classification error probability for the training dataset.
             y_train_conf_mat = confusion_matrix(y_train_k, y_train_k_pred)
-            print(y_train_conf_mat)
+            # print(y_train_conf_mat)
             y_train_correct_class_samples = np.sum(np.diag(y_train_conf_mat))
             y_train_correct_tot_N = np.sum(y_train_conf_mat)
-            print("y_train_correct_class_samples Total Mumber of Misclassified Samples: {:d}".format(
-                y_train_correct_tot_N - y_train_correct_class_samples))
+            # print("y_train_correct_class_samples Total Mumber of Misclassified Samples: {:d}".format(
+                # y_train_correct_tot_N - y_train_correct_class_samples))
 
             y_train_prob_error = 1 - (y_train_correct_class_samples /
                                       y_train_correct_tot_N)
-            print(
-                "y_train_correct_class_samples Empirically Estimated Probability of Error: {:.4f}".format(y_train_prob_error))
+            # print(
+            #     "y_train_correct_class_samples Empirically Estimated Probability of Error: {:.4f}".format(y_train_prob_error))
 
             # Get the classification error probability for the validation dataset.
             y_valid_conf_mat = confusion_matrix(y_valid_k, y_valid_k_pred)
             print(y_valid_conf_mat)
             y_valid_correct_class_samples = np.sum(np.diag(y_valid_conf_mat))
             y_valid_correct_tot_N = np.sum(y_valid_conf_mat)
-            print("y_valid_correct_class_samples Total Mumber of Misclassified Samples: {:d}".format(
-                y_valid_correct_tot_N - y_valid_correct_class_samples))
+            # print("y_valid_correct_class_samples Total Mumber of Misclassified Samples: {:d}".format(
+            #     y_valid_correct_tot_N - y_valid_correct_class_samples))
 
             y_valid_prob_error = 1 - (y_valid_correct_class_samples /
                                       y_valid_correct_tot_N)
-            print(
-                "y_valid_correct_class_samples Empirically Estimated Probability of Error: {:.4f}".format(y_valid_prob_error))
+            # print(
+            #     "y_valid_correct_class_samples Empirically Estimated Probability of Error: {:.4f}".format(y_valid_prob_error))
 
             # Record classification error probabilities as well for this model and k-fold
             mse_train_mk[n - 1, k] = y_train_prob_error
@@ -499,10 +507,10 @@ def get_model_order_with_cross_validation():
 
     # Graph probability of error vs number of perceptrons
     fig, ax = plt.subplots(figsize=(10, 10))
-    ax.plot(n_perceptrons, mse_train_m, color="b",
-            marker="s", label=r"$D_{train}$")
+    # ax.plot(n_perceptrons, mse_train_m, color="b",
+    #         marker="s", label=r"$D_{train}$")
     ax.plot(n_perceptrons, mse_valid_m, color="r",
-            marker="x", label=r"$D_{valid}$")
+            marker="x", label=r"{} n_train Samples".format(n_train))
 
     # Use logarithmic y-scale as MSE values get very large
     # ax.set_yscale('log')
@@ -510,11 +518,6 @@ def get_model_order_with_cross_validation():
     # ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
     ax.legend(loc='upper left', shadow=True)
-    plt.xlabel("Number of Hidden Perceptrons")
-    plt.ylabel("P(error)")
-    plt.title(
-        "P(error) vs Num. of Hidden Perceptrons with Separate Training & Validation Sets")
-    plt.show()
 
     # +1 as the index starts from 0 while the degrees start from 1
     optimal_d = np.argmin(mse_valid_m) + 1
@@ -573,6 +576,7 @@ def train_model_with_optimal_num_perceptrons(n_perceptrons):
         "y_test_correct_tot_N Empirically Estimated Probability of Error: {:.4f}".format(y_test_prob_error))
 
     # input()
+    return y_test_prob_error
 
 
 '''
@@ -617,11 +621,31 @@ plt.show()
 
 
 def main():
-    # plot_train_data()
-    # plot_test_data()
-    # get_theoretically_optimal_classifier()
-    optimal_num_perceptrons = get_model_order_with_cross_validation()
-    train_model_with_optimal_num_perceptrons(optimal_num_perceptrons)
+    # The various number of samples in the training dataset that will be used.
+    n_train = [100,200,500,1000,2000,5000]
+    # Stores the optimal number of perceptrons for each number of n_train
+    optimal_p = []
+    for n in n_train:
+        # plot_train_data()
+        # plot_test_data()
+        generate_data(n)
+        get_theoretically_optimal_classifier(n)
+        optimal_p.append(get_model_order_with_cross_validation(n))
+
+    # Show plot
+    plt.xlabel("Number of Hidden Perceptrons")
+    plt.ylabel("P(error)")
+    plt.title(
+        "P(error) vs Num. of Hidden Perceptrons")
+    plt.show()
+
+
+    # Print the optimal number of perceptrons for each n_train
+    for i in range(0, len(n_train)):
+        print("n_train: {}\toptimal_n_p: {}".format(n_train[i], optimal_p[i]))
+        
+
+    # train_model_with_optimal_num_perceptrons(optimal_num_perceptrons)
 
 
 if __name__ == '__main__':
