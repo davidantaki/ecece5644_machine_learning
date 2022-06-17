@@ -1,6 +1,7 @@
 # Author: David Antaki
 
 # Widget to manipulate plots in Jupyter notebooks
+from cProfile import label
 import random
 from torchsummary import summary
 import torch.nn.functional as F
@@ -15,6 +16,7 @@ import matplotlib.colors as mcol
 import matplotlib.pyplot as plt  # For general plotting
 from sys import float_info  # Threshold smallest positive floating value
 from sklearn.model_selection import KFold
+from datetime import datetime
 
 
 def perform_lda(X, labels, C=2):
@@ -301,13 +303,13 @@ def generate_data(n_train):
     gmm_pdf['cov'] = np.array([[[0.80945553, 0.80161658, 0.8204003],
                                 [-0.74074722, 0.97021266, - 0.0043638],
                                 [-0.18232703, 0.40816451, 0.9241849]],
-                            [[0.86490531, - 0.61466458, - 0.51610938],
+                               [[0.86490531, - 0.61466458, - 0.51610938],
                                 [-0.22176463, 0.92549909, - 0.20590192],
                                 [-0.19933607, - 0.58780676, 0.52270645]],
-                            [[0.67062215,  0.54339883, 0.04097537],
+                               [[0.67062215,  0.54339883, 0.04097537],
                                 [-0.14566282, 0.22466556, -0.62886916],
                                 [0.06434953, -0.13475077, 0.58643072]],
-                            [[0.8952883, 0.56810939, 0.032766],
+                               [[0.8952883, 0.56810939, 0.032766],
                                 [0.32891856, 0.93071298, 0.41149179],
                                 [-0.02098863, -0.31924666, 0.42317104]]])
     # 4 classes
@@ -323,7 +325,7 @@ def generate_data(n_train):
     # Possible Labels
     L = np.array(range(C))
     # Number of samples per component for the training dataset
-    N = n_train
+    N = (int)(n_train/C)
     # Total number of training samples
     tot_N = N*C
     # Number of samples for the test dataset
@@ -389,11 +391,11 @@ def get_theoretically_optimal_classifier(n_train):
 
     correct_class_samples = np.sum(np.diag(conf_mat))
     # print("Total Mumber of Misclassified Samples: {:d}".format(
-        # np.sum(conf_mat) - correct_class_samples))
+    # np.sum(conf_mat) - correct_class_samples))
 
     prob_error = 1 - (correct_class_samples / np.sum(conf_mat))
     print(
-        "Empirically Estimated Probability of Error for {} number of samples: {:.4f}".format(n_train, prob_error))
+        "Empirically Estimated Probability of Error for test Dataset: {:.4f}".format(prob_error))
 
 ############################ END Theoretically Optimal Classifier ############################
 
@@ -428,6 +430,8 @@ def get_model_order_with_cross_validation(n_train):
         # NOTE that these subsets are of the TRAINING dataset
         # Imagine we don't have enough data available to afford another entirely separate validation set
         for train_indices, valid_indices in kf.split(X_train):
+            print("n_train: {}\tn_perceptrons: {}\tk_fold: {}".format(n_train, n, k))
+
             # Extract the training and validation sets from the K-fold split
             X_train_k = X_train[train_indices]
             y_train_k = y_train[train_indices]
@@ -439,7 +443,7 @@ def get_model_order_with_cross_validation(n_train):
             output_dim = C
             model = TwoLayerMLP(input_dim, n, output_dim)
             # Visualize network architecture
-            print(model)
+            # print(model)
 
             # Stochastic GD with learning rate and momentum hyperparameters
             optimizer = torch.optim.SGD(
@@ -448,7 +452,7 @@ def get_model_order_with_cross_validation(n_train):
             # the output when validating, on top of calculating the negative log-likelihood using
             # nn.NLLLoss(), while also being more stable numerically... So don't implement from scratch
             criterion = nn.CrossEntropyLoss()
-            num_epochs = 100
+            num_epochs = 25
 
             # Convert numpy structures to PyTorch tensors, as these are the data types required by the library
             X_train_k_tensor = torch.FloatTensor(X_train_k)
@@ -470,7 +474,7 @@ def get_model_order_with_cross_validation(n_train):
             y_train_correct_class_samples = np.sum(np.diag(y_train_conf_mat))
             y_train_correct_tot_N = np.sum(y_train_conf_mat)
             # print("y_train_correct_class_samples Total Mumber of Misclassified Samples: {:d}".format(
-                # y_train_correct_tot_N - y_train_correct_class_samples))
+            # y_train_correct_tot_N - y_train_correct_class_samples))
 
             y_train_prob_error = 1 - (y_train_correct_class_samples /
                                       y_train_correct_tot_N)
@@ -479,7 +483,7 @@ def get_model_order_with_cross_validation(n_train):
 
             # Get the classification error probability for the validation dataset.
             y_valid_conf_mat = confusion_matrix(y_valid_k, y_valid_k_pred)
-            print(y_valid_conf_mat)
+            # print(y_valid_conf_mat)
             y_valid_correct_class_samples = np.sum(np.diag(y_valid_conf_mat))
             y_valid_correct_tot_N = np.sum(y_valid_conf_mat)
             # print("y_valid_correct_class_samples Total Mumber of Misclassified Samples: {:d}".format(
@@ -502,8 +506,8 @@ def get_model_order_with_cross_validation(n_train):
     mse_train_m = np.mean(mse_train_mk, axis=1)
     mse_valid_m = np.mean(mse_valid_mk, axis=1)
 
-    print(mse_train_m)
-    print(mse_valid_m)
+    # print(mse_train_m)
+    # print(mse_valid_m)
 
     # Graph probability of error vs number of perceptrons
     fig, ax = plt.subplots(figsize=(10, 10))
@@ -516,12 +520,18 @@ def get_model_order_with_cross_validation(n_train):
     # ax.set_yscale('log')
     # Force x-axis for degrees to be integer
     # ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-
     ax.legend(loc='upper left', shadow=True)
+    plt.xlabel("Number of Hidden Perceptrons")
+    plt.ylabel("P(error)")
+    plt.title(
+        "P(error) vs Num. of Hidden Perceptrons")
+    # plt.show()
+    plt.savefig("{}-P(error) vs Num. of Hidden Perceptrons.png".format(
+        datetime.now().strftime("%Y-%d-%m-%H-%M")), dpi=300)
 
     # +1 as the index starts from 0 while the degrees start from 1
     optimal_d = np.argmin(mse_valid_m) + 1
-    print("The model selected to best fit the data without overfitting is: d={}".format(optimal_d))
+    # print("The model selected to best fit the data without overfitting is: d={}".format(optimal_d))
 
     return optimal_d
 
@@ -531,12 +541,13 @@ def get_model_order_with_cross_validation(n_train):
 def train_model_with_optimal_num_perceptrons(n_perceptrons):
     ''' Re-train the  MLP with the optimally selected number of perceptrons.
     '''
+    print("")
     input_dim = X_train.shape[1]
     # n_hidden_neurons = 16
     output_dim = C
     model = TwoLayerMLP(input_dim, n_perceptrons, output_dim)
     # Visualize network architecture
-    print(model)
+    # print(model)
 
     # Stochastic GD with learning rate and momentum hyperparameters
     optimizer = torch.optim.SGD(
@@ -545,7 +556,7 @@ def train_model_with_optimal_num_perceptrons(n_perceptrons):
     # the output when validating, on top of calculating the negative log-likelihood using
     # nn.NLLLoss(), while also being more stable numerically... So don't implement from scratch
     criterion = nn.CrossEntropyLoss()
-    num_epochs = 100
+    num_epochs = 25
 
     # Convert numpy structures to PyTorch tensors, as these are the data types required by the library
     X_train_tensor = torch.FloatTensor(X_train)
@@ -567,8 +578,8 @@ def train_model_with_optimal_num_perceptrons(n_perceptrons):
     print(y_test_conf_mat)
     y_test_correct_class_samples = np.sum(np.diag(y_test_conf_mat))
     y_test_correct_tot_N = np.sum(y_test_conf_mat)
-    print("y_test_conf_mat Total Mumber of Misclassified Samples: {:d}".format(
-        y_test_correct_tot_N - y_test_correct_class_samples))
+    # print("y_test_conf_mat Total Mumber of Misclassified Samples: {:d}".format(
+    #     y_test_correct_tot_N - y_test_correct_class_samples))
 
     y_test_prob_error = 1 - (y_test_correct_class_samples /
                              y_test_correct_tot_N)
@@ -581,30 +592,46 @@ def train_model_with_optimal_num_perceptrons(n_perceptrons):
 
 def main():
     # The various number of samples in the training dataset that will be used.
-    n_train = [100,200,500,1000,2000,5000]
+    n_train = [100, 200, 500, 1000, 2000, 5000]
     # Stores the optimal number of perceptrons for each number of n_train
     optimal_p = []
+    # optimal_p = [10,10,10,10,10,10]
+    # For storing how well the trained models did on the test set per each number of n_train
+    p_errors = []
+    # p_errors = [0.5,0.5,0.5,0.5,0.5,0.5]
+    p_errors = [0.026575000000000015, 0.023552499999999978, 0.02250000000000001,
+                0.021695000000000022, 0.02142999999999995, 0.021257500000000042]
     for n in n_train:
         # plot_train_data()
         # plot_test_data()
         generate_data(n)
-        get_theoretically_optimal_classifier(n)
-        optimal_p.append(get_model_order_with_cross_validation(n))
-
-    # Show plot
-    plt.xlabel("Number of Hidden Perceptrons")
-    plt.ylabel("P(error)")
-    plt.title(
-        "P(error) vs Num. of Hidden Perceptrons")
-    plt.show()
-
+        # get_theoretically_optimal_classifier(n)
+        # optimal_p.append(get_model_order_with_cross_validation(n))
+        # p_errors.append(train_model_with_optimal_num_perceptrons(n))
 
     # Print the optimal number of perceptrons for each n_train
-    for i in range(0, len(n_train)):
-        print("n_train: {}\toptimal_n_p: {}".format(n_train[i], optimal_p[i]))
-        
+    # for i in range(0, len(n_train)):
+    #     print("n_train: {}\toptimal_n_p: {}\tp_error: {}".format(
+    #         n_train[i], optimal_p[i], p_errors[i]))
 
-    # train_model_with_optimal_num_perceptrons(optimal_num_perceptrons)
+    # Graph
+    # Graph probability of error vs number of perceptrons
+    fig2, ax2 = plt.subplots(figsize=(10, 10))
+    # ax.plot(n_perceptrons, mse_train_m, color="b",
+    #         marker="s", label=r"$D_{train}$")
+    ax2.plot(n_train, p_errors, color="r",
+             marker="x")
+    ax2.legend(loc='upper right', shadow=True)
+    ax2.set_xscale('log')
+    # plt.axhline(y=0.1393, color='b', linestyle='-',
+    #             label="Empirically Estimated Test P(error) for Theoretically Optimal Classifier")
+    plt.xlabel("# of Samples in Training Dataset")
+    plt.ylabel("Empirical P(error)")
+    plt.title(
+        "Empiracal P(error) for Each MLP vs # of Samples in Training Dataset")
+    # plt.show()
+    plt.savefig("{}Empiracal P(error) for Each MLP vs # of Samples in Training Dataset.png".format(
+        datetime.now().strftime("%Y-%d-%m-%H-%M")), dpi=300)
 
 
 if __name__ == '__main__':
