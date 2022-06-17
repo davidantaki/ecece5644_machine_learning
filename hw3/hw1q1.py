@@ -579,47 +579,6 @@ def train_model_with_optimal_num_perceptrons(n_perceptrons):
     return y_test_prob_error
 
 
-'''
-# Create coordinate matrices determined by the sample space
-xx, yy, zz = np.meshgrid(np.linspace(-4, 4, 250),
-                         np.linspace(-4, 4, 250), np.linspace(-4, 4, 250))
-
-grid = np.c_[xx.ravel(), yy.ravel(), zz.ravel()]
-
-# Set up test data as tensor
-grid_tensor = torch.FloatTensor(grid)
-# Z matrix are the predictions resulting from the forward pass through the network
-Z = model_predict(model, grid_tensor).reshape(xx.shape)
-print(Z.shape)
-
-plt.figure(figsize=(10, 8))
-
-# uses gray background for black dots
-# plt.pcolormesh(xx, yy, Z[:,:], cmap=plt.cm.coolwarm)
-
-fig = plt.figure(figsize=(10, 10))
-ax_raw = fig.add_subplot(111, projection='3d')
-ax_raw.scatter(X[:, 0], X[:, 1], X[:, 2], c='r', label="Class 0")
-# ax_raw.scatter(Z[y == 1, 0], Z[y == 1, 1],
-#                Z[y == 1, 2], c='b', label="Class 1")
-# ax_raw.scatter(Z[y == 2, 0], Z[y == 2, 1], Z[y == 2, 2], 'r*', label="Class 2")
-# ax_raw.scatter(Z[y == 3, 0], Z[y == 3, 1], Z[y == 3, 2], 'g^', label="Class 3")
-ax_raw.set_xlabel(r"$x_0$")
-ax_raw.set_ylabel(r"$x_1$")
-ax_raw.set_zlabel(r"$x_2$")
-plt.show()
-
-# plt.plot(X[y==0, 0], X[y==0, 1], 'bx', label="Class 0")
-# plt.plot(X[y==1, 0], X[y==1, 1], 'ko', label="Class 1")
-# plt.plot(X[y==2, 0], X[y==2, 1], 'r*', label="Class 2")
-# plt.xlabel(r"$x_1$")
-# plt.ylabel(r"$x_2$")
-# plt.title("MLP Classification Boundaries Train Set")
-# plt.legend()
-# plt.show()
-'''
-
-
 def main():
     # The various number of samples in the training dataset that will be used.
     n_train = [100,200,500,1000,2000,5000]
