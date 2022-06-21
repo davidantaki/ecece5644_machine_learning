@@ -1,10 +1,11 @@
 from random import random
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score, confusion_matrix
 
 
 plt.rc('font', size=22)          # controls default text sizes
@@ -22,7 +23,7 @@ classes = [-1, 1]
 
 np.random.seed(10)
 
-# GENERATE TRAINING DATASET
+
 def generate_data(n_samples: np.integer):
     theta = np.random.uniform(low=-np.pi, high=np.pi, size=(n_samples, 1))
     # plt.plot(theta, color="b", marker="s")
@@ -34,7 +35,7 @@ def generate_data(n_samples: np.integer):
     X = np.empty((n_samples, 2))
     y = np.empty((n_samples,))
     for i in range(0, n_samples):
-        c = np.random.random_integers(0,1)
+        c = np.random.random_integers(0, 1)
         # Class -1
         if c == 0:
             X[i, 0] = r_l[0]*np.cos(theta[i])+n[i, 0]
@@ -47,6 +48,8 @@ def generate_data(n_samples: np.integer):
             y[i] = 1
     return X, y
 
+
+# GENERATE TRAINING DATASET
 X_train, y_train = generate_data(n_train)
 # fig, ax = plt.subplots(figsize=(10, 10))
 # ax.scatter(X_train[y_train == -1, 0], X_train[y_train == -1, 1],
@@ -60,7 +63,6 @@ X_train, y_train = generate_data(n_train)
 # plt.show()
 
 # GENERATE TEST DATASET
-
 X_test, y_test = generate_data(n_test)
 # fig, ax = plt.subplots(figsize=(10, 10))
 # ax.scatter(X_test[y_test == -1, 0], X_test[y_test == -1, 1],
@@ -74,10 +76,6 @@ X_test, y_test = generate_data(n_test)
 # plt.show()
 
 
-svc = make_pipeline(StandardScaler(), SVC(kernel='rbf', gamma=1.0, C=1.0))
-svc.fit(X_train, y_train)
-
-
 def plot_svm_predictions(svm):
     # Create coordinate matrices determined by the sample space
     xx, yy = np.meshgrid(np.linspace(-8, 8, 250), np.linspace(-8, 8, 250))
@@ -87,13 +85,73 @@ def plot_svm_predictions(svm):
     plt.contourf(xx, yy, y_pred, alpha=0.2)
 
 
+# Number of C and gamma hyperparams tried
+n_C_list = 10
+n_gamma_list = 10
+n_param_total = n_C_list*n_gamma_list
+# These are the possible hyper parameters for C and gamma
+C_list = np.logspace(-3, 3, num=n_C_list, base=10.0)
+gamma_list = np.logspace(-3, 3, num=n_gamma_list, base=10.0)
+
+# For storing scores from cross validation
+# This has the shape (number of total hyperparam combos tried, 3)
+# 3=(C, gamma, scores)
+final_scores = []
+
+iteration_counter = 0
+for C_param in C_list:
+    for gamma_param in gamma_list:
+        # https://scikit-learn.org/stable/auto_examples/svm/plot_rbf_parameters.html#sphx-glr-auto-examples-svm-plot-rbf-parameters-pysvc = make_pipeline(StandardScaler(), SVC(kernel='rbf', gamma=1.0, C=1.0))
+        # ^^ Suggests gamma and C range of 10^-3 to 10^3 to start
+        svc = make_pipeline(StandardScaler(), SVC(
+            kernel='rbf', gamma=gamma_param, C=C_param))
+        # svc.fit(X_train, y_train)
+        # 'accuracy' scorer in sklearn uses the number of misclassified samples divided by the total number of samples, therefore giving the minimum probability of classification error.
+        scores = cross_validate(estimator=svc, X=X_train,
+                                y=y_train, cv=10, scoring='accuracy')
+        final_scores.append([C_param, gamma_param, scores])
+        print("Itararion: {}\tC_param: {}\tgamma_param: {}\tProb. Error: {}".format(iteration_counter,
+                                                                                    C_param, gamma_param, 1-np.mean(scores['test_score'])))
+        iteration_counter = iteration_counter + 1
+# print(final_scores)
+final_scores = np.array(final_scores)
+print(final_scores)
+# Average all the scores and get rid of the other metrics from cross_validate.
+# And convert to prob. of error from accuracy.
+for scores in final_scores:
+    scores[2] = 1-np.mean(scores[2]['test_score'])
+print(final_scores)
+print(final_scores[:, 2])
+optimal_params = final_scores[np.argmin(final_scores[:, 2])]
+print("optimal_params: {}".format(optimal_params))
+print("Optimal C: {}\tOptimal gamma: {}\tProb_error: {}".format(
+    optimal_params[0], optimal_params[1], optimal_params[2]))
+
+fig = plt.figure(figsize=(10, 10))
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(final_scores[:, 0], final_scores[:, 1],
+               final_scores[:, 2], c='r')
+ax.set_xlabel("C")
+ax.set_ylabel("Gamma")
+ax.set_zlabel("P(error)")
+ax.set_title("Box Constraint (C) vs Gaussian Kernel Width (gamma) vs P(error) for that C and gamma combo")
+plt.legend()
+plt.show()
+
 fig, ax = plt.subplots(figsize=(10, 10))
-ax.plot(X_train[y_train == classes[0], 0],
-         X_train[y_train == classes[0], 1], 'bo', label="Class -1")
-ax.plot(X_train[y_train == classes[1], 0],
-         X_train[y_train == classes[1], 1], 'ro', label="Class +1")
-ax.set_xlabel(r"$x_1$")
-ax.set_ylabel(r"$x_2$")
+ax.scatter(final_scores[0], final_scores[2],
+            color="b", marker="o")
 ax.legend()
-plot_svm_predictions(svc)
+ax.set_title("C vs P(error)")
+ax.set_xlabel("C")
+ax.set_ylabel("P(error)")
+plt.show()
+
+fig, ax = plt.subplots(figsize=(10, 10))
+ax.scatter(final_scores[1], final_scores[2],
+            color="b", marker="o")
+ax.legend()
+ax.set_title("Gamma vs P(error)")
+ax.set_xlabel("gamma")
+ax.set_ylabel("P(error)")
 plt.show()
