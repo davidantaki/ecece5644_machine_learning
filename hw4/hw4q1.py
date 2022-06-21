@@ -1,4 +1,6 @@
+from datetime import datetime
 from random import random
+from typing import final
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import cross_validate
@@ -93,6 +95,11 @@ n_param_total = n_C_list*n_gamma_list
 C_list = np.logspace(-3, 3, num=n_C_list, base=10.0)
 gamma_list = np.logspace(-3, 3, num=n_gamma_list, base=10.0)
 
+'''
+C_list = [0.1, 1.0, 10, 100]
+gamma_list = [0.1, 1.0, 100]
+'''
+
 # For storing scores from cross validation
 # This has the shape (number of total hyperparam combos tried, 3)
 # 3=(C, gamma, scores)
@@ -112,7 +119,28 @@ for C_param in C_list:
         final_scores.append([C_param, gamma_param, scores])
         print("Itararion: {}\tC_param: {}\tgamma_param: {}\tProb. Error: {}".format(iteration_counter,
                                                                                     C_param, gamma_param, 1-np.mean(scores['test_score'])))
+        ''''
+        # SVC with poly degree features
+        # Pipeline of sequentially applied transforms before producing the final estimation, e.g. Support Vector Classifier
+        svc.fit(X_train, y_train)
+
+        plt.figure(figsize=(10, 8))
+        plt.plot(X_train[y_train == -1, 0],
+                 X_train[y_train == -1, 1], 'bx', label="Class -1")
+        plt.plot(X_train[y_train == 1, 0],
+                 X_train[y_train == 1, 1], 'ko', label="Class +1")
+        plt.xlabel(r"$x_0$")
+        plt.ylabel(r"$x_1$")
+        plt.title("C={}, gamma={}, P(error)={}".format(
+            C_param, gamma_param, 1-np.mean(scores['test_score'])))
+        plt.legend()
+        plot_svm_predictions(svc)
+        # plt.show()
+        plt.savefig("{}-C={}, gamma={}.png".format(
+            datetime.now().strftime("%Y-%d-%m-%H-%M"), C_param, gamma_param), dpi=300)
+        '''
         iteration_counter = iteration_counter + 1
+
 # print(final_scores)
 final_scores = np.array(final_scores)
 print(final_scores)
@@ -120,8 +148,8 @@ print(final_scores)
 # And convert to prob. of error from accuracy.
 for scores in final_scores:
     scores[2] = 1-np.mean(scores[2]['test_score'])
-print(final_scores)
-print(final_scores[:, 2])
+print("final_scores: {}".format(final_scores))
+# print(final_scores[:, 2])
 optimal_params = final_scores[np.argmin(final_scores[:, 2])]
 print("optimal_params: {}".format(optimal_params))
 print("Optimal C: {}\tOptimal gamma: {}\tProb_error: {}".format(
@@ -130,27 +158,30 @@ print("Optimal C: {}\tOptimal gamma: {}\tProb_error: {}".format(
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111, projection='3d')
 ax.scatter(final_scores[:, 0], final_scores[:, 1],
-               final_scores[:, 2], c='r')
+           final_scores[:, 2], c='r')
 ax.set_xlabel("C")
 ax.set_ylabel("Gamma")
 ax.set_zlabel("P(error)")
-ax.set_title("Box Constraint (C) vs Gaussian Kernel Width (gamma) vs P(error) for that C and gamma combo")
+ax.set_title(
+    "Box Constraint (C) vs Gaussian Kernel Width (gamma) vs P(error) for that C and gamma combo")
 plt.legend()
 plt.show()
 
 fig, ax = plt.subplots(figsize=(10, 10))
-ax.scatter(final_scores[0], final_scores[2],
-            color="b", marker="o")
+ax.scatter(final_scores[:, 0], final_scores[:, 2],
+           color="b", marker="o")
 ax.legend()
+ax.set_xscale('log')
 ax.set_title("C vs P(error)")
 ax.set_xlabel("C")
 ax.set_ylabel("P(error)")
 plt.show()
 
 fig, ax = plt.subplots(figsize=(10, 10))
-ax.scatter(final_scores[1], final_scores[2],
-            color="b", marker="o")
+ax.scatter(final_scores[:, 1], final_scores[:, 2],
+           color="b", marker="o")
 ax.legend()
+ax.set_xscale('log')
 ax.set_title("Gamma vs P(error)")
 ax.set_xlabel("gamma")
 ax.set_ylabel("P(error)")
