@@ -251,7 +251,7 @@ def optimize_mlp_hyperparameters():
     iteration_counter = 0
     for n_perceptrons in range(1, 100):
         mlp = make_pipeline(StandardScaler(), MLPClassifier(
-            hidden_layer_sizes=(n_perceptrons,), activation='relu', solver='sgd', max_iter=200, random_state=1, early_stopping=True))
+            hidden_layer_sizes=(n_perceptrons,), activation='relu', solver='sgd', max_iter=200, random_state=1))
         # 'accuracy' scorer in sklearn uses the number of misclassified samples divided by the total number of samples, therefore giving the minimum probability of classification error.
         scores = cross_validate(estimator=mlp, X=X_train,
                                 y=y_train, cv=10, scoring='accuracy')
@@ -308,7 +308,7 @@ def train_and_test_final_mlp_model(n_perceptrons):
     # TRAIN AND TEST FINAL MLP MODEL
     # Optimal C and gamma params were determined above separately.
     mlp = make_pipeline(StandardScaler(), MLPClassifier(
-        hidden_layer_sizes=(n_perceptrons,), activation='relu', solver='sgd', max_iter=200, random_state=1, early_stopping=True))
+        hidden_layer_sizes=(n_perceptrons,), activation='relu', solver='sgd', max_iter=200, random_state=1))
     mlp.fit(X_train, y_train)
     y_test_pred = mlp.predict(X_test)
     n_correct_samples = np.sum(np.diag(confusion_matrix(y_test, y_test_pred)))
