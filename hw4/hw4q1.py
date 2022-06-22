@@ -80,7 +80,7 @@ X_test, y_test = generate_data(n_test)
 # plt.show()
 
 
-def plot_svm_predictions(svm):
+def plot_model_predictions(svm):
     # Create coordinate matrices determined by the sample space
     xx, yy = np.meshgrid(np.linspace(-8, 8, 250), np.linspace(-8, 8, 250))
     grid = np.c_[xx.ravel(), yy.ravel()]
@@ -212,7 +212,7 @@ def train_and_test_final_svm_model(C, gamma):
     plt.title("C={}, gamma={}, P(error)={}".format(
         C, gamma, y_test_prob_error))
     plt.legend()
-    plot_svm_predictions(svc)
+    plot_model_predictions(svc)
     plt.show()
     plt.savefig("{}-C={}, gamma={}.png".format(
         datetime.now().strftime("%Y-%d-%m-%H-%M"), C, gamma), dpi=300)
@@ -221,35 +221,15 @@ def train_and_test_final_svm_model(C, gamma):
 
 
 def optimize_mlp_hyperparameters():
-    # n_hidden_perceptrons = 100
-    # mlp = make_pipeline(StandardScaler(), MLPClassifier(
-    #     hidden_layer_sizes=(n_hidden_perceptrons,), activation='relu', solver='sgd', max_iter=200, random_state=1))
-
-    # # svc.fit(X_train, y_train)
-    # # 'accuracy' scorer in sklearn uses the number of misclassified samples divided by the total number of samples, therefore giving the minimum probability of classification error.
-    # scores = cross_validate(estimator=mlp, X=X_train,
-    #                         y=y_train, cv=10, scoring='accuracy')
-    # print(scores)
-
-    # # Number of C and gamma hyperparams tried
-    # n_C_list = 10
-    # n_gamma_list = 10
-    # n_param_total = n_C_list*n_gamma_list
-    # # These are the possible hyper parameters for C and gamma
-    # C_list = np.logspace(-3, 3, num=n_C_list, base=10.0)
-    # gamma_list = np.logspace(-3, 3, num=n_gamma_list, base=10.0)
-    '''
-    C_list = [0.1, 1.0, 10, 100]
-    gamma_list = [0.1, 1.0, 100]
-    '''
-
     # For storing scores from cross validation
     # This has the shape (number of total hyperparam combos tried, 2)
     # 2=(#_perceptrons, scores)
     final_scores = []
 
+    n_perceptrons_list = [1,10,50,100]
     iteration_counter = 0
-    for n_perceptrons in range(1, 100):
+    # for n_perceptrons in range(1, 100):
+    for n_perceptrons in n_perceptrons_list:
         mlp = make_pipeline(StandardScaler(), MLPClassifier(
             hidden_layer_sizes=(n_perceptrons,), activation='relu', solver='sgd', max_iter=200, random_state=1))
         # 'accuracy' scorer in sklearn uses the number of misclassified samples divided by the total number of samples, therefore giving the minimum probability of classification error.
@@ -259,24 +239,22 @@ def optimize_mlp_hyperparameters():
         print("Itararion: {}\tn_perceptrons: {}\tProb. Error: {}".format(iteration_counter,
                                                                          n_perceptrons, 1-np.mean(scores['test_score'])))
 
-        # SVC with poly degree features
-        # Pipeline of sequentially applied transforms before producing the final estimation, e.g. Support Vector Classifier
-        # mlp.fit(X_train, y_train)
+        mlp.fit(X_train, y_train)
 
-        # plt.figure(figsize=(10, 8))
-        # plt.plot(X_train[y_train == -1, 0],
-        #         X_train[y_train == -1, 1], 'bx', label="Class -1")
-        # plt.plot(X_train[y_train == 1, 0],
-        #         X_train[y_train == 1, 1], 'ko', label="Class +1")
-        # plt.xlabel(r"$x_0$")
-        # plt.ylabel(r"$x_1$")
-        # plt.title("C={}, gamma={}, P(error)={}".format(
-        #     C_param, gamma_param, 1-np.mean(scores['test_score'])))
-        # plt.legend()
-        # plot_svm_predictions(svc)
-        # # plt.show()
-        # plt.savefig("{}-C={}, gamma={}.png".format(
-        #     datetime.now().strftime("%Y-%d-%m-%H-%M"), C_param, gamma_param), dpi=300)
+        plt.figure(figsize=(10, 8))
+        plt.plot(X_train[y_train == -1, 0],
+                X_train[y_train == -1, 1], 'bx', label="Class -1")
+        plt.plot(X_train[y_train == 1, 0],
+                X_train[y_train == 1, 1], 'ko', label="Class +1")
+        plt.xlabel(r"$x_0$")
+        plt.ylabel(r"$x_1$")
+        plt.title("# Perceptrons={}, P(error)={}".format(
+            n_perceptrons, 1-np.mean(scores['test_score'])))
+        plt.legend()
+        plot_model_predictions(mlp)
+        # plt.show()
+        plt.savefig("{}-# Perceptrons={}.png".format(
+            datetime.now().strftime("%Y-%d-%m-%H-%M"), n_perceptrons), dpi=300)
 
         iteration_counter = iteration_counter + 1
 
@@ -345,7 +323,7 @@ def train_and_test_final_mlp_model(n_perceptrons):
     plt.title("# Perceptrons={}, P(error)={}".format(
         n_perceptrons, y_test_prob_error))
     plt.legend()
-    plot_svm_predictions(mlp)
+    plot_model_predictions(mlp)
     plt.show()
     plt.savefig("{}-# Perceptrons={}.png".format(
         datetime.now().strftime("%Y-%d-%m-%H-%M"), n_perceptrons), dpi=300)
@@ -357,3 +335,4 @@ if __name__ == '__main__':
     # optimize_svm_hyperparameters()
     # train_and_test_final_svm_model(0.46415, 0.1)
     optimize_mlp_hyperparameters()
+    # train_and_test_final_mlp_model(59)
