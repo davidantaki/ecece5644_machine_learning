@@ -122,7 +122,9 @@ def optimize_svm_hyperparameters():
             final_scores.append([C_param, gamma_param, scores])
             print("Itararion: {}\tC_param: {}\tgamma_param: {}\tProb. Error: {}".format(iteration_counter,
                                                                                         C_param, gamma_param, 1-np.mean(scores['test_score'])))
-            ''''
+             
+            # Plot this run of the cross validation (don't normally run this)        
+            '''
             # SVC with poly degree features
             # Pipeline of sequentially applied transforms before producing the final estimation, e.g. Support Vector Classifier
             svc.fit(X_train, y_train)
@@ -239,8 +241,8 @@ def optimize_mlp_hyperparameters():
         print("Itararion: {}\tn_perceptrons: {}\tProb. Error: {}".format(iteration_counter,
                                                                          n_perceptrons, 1-np.mean(scores['test_score'])))
 
+        # Plot this run of the cross validation (don't normally run this)        
         mlp.fit(X_train, y_train)
-
         plt.figure(figsize=(10, 8))
         plt.plot(X_train[y_train == -1, 0],
                 X_train[y_train == -1, 1], 'bx', label="Class -1")
