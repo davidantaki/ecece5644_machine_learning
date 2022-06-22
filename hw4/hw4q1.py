@@ -122,8 +122,8 @@ def optimize_svm_hyperparameters():
             final_scores.append([C_param, gamma_param, scores])
             print("Itararion: {}\tC_param: {}\tgamma_param: {}\tProb. Error: {}".format(iteration_counter,
                                                                                         C_param, gamma_param, 1-np.mean(scores['test_score'])))
-             
-            # Plot this run of the cross validation (don't normally run this)        
+
+            # Plot this run of the cross validation (don't normally run this)
             '''
             # SVC with poly degree features
             # Pipeline of sequentially applied transforms before producing the final estimation, e.g. Support Vector Classifier
@@ -228,9 +228,9 @@ def optimize_mlp_hyperparameters():
     # 2=(#_perceptrons, scores)
     final_scores = []
 
-    n_perceptrons_list = [1,10,50,100]
+    # n_perceptrons_list = [1,10,50,1000]
+    n_perceptrons_list = [i for i in range(1, 100)]
     iteration_counter = 0
-    # for n_perceptrons in range(1, 100):
     for n_perceptrons in n_perceptrons_list:
         mlp = make_pipeline(StandardScaler(), MLPClassifier(
             hidden_layer_sizes=(n_perceptrons,), activation='relu', solver='sgd', max_iter=200, random_state=1))
@@ -241,22 +241,22 @@ def optimize_mlp_hyperparameters():
         print("Itararion: {}\tn_perceptrons: {}\tProb. Error: {}".format(iteration_counter,
                                                                          n_perceptrons, 1-np.mean(scores['test_score'])))
 
-        # Plot this run of the cross validation (don't normally run this)        
-        mlp.fit(X_train, y_train)
-        plt.figure(figsize=(10, 8))
-        plt.plot(X_train[y_train == -1, 0],
-                X_train[y_train == -1, 1], 'bx', label="Class -1")
-        plt.plot(X_train[y_train == 1, 0],
-                X_train[y_train == 1, 1], 'ko', label="Class +1")
-        plt.xlabel(r"$x_0$")
-        plt.ylabel(r"$x_1$")
-        plt.title("# Perceptrons={}, P(error)={}".format(
-            n_perceptrons, 1-np.mean(scores['test_score'])))
-        plt.legend()
-        plot_model_predictions(mlp)
-        # plt.show()
-        plt.savefig("{}-# Perceptrons={}.png".format(
-            datetime.now().strftime("%Y-%d-%m-%H-%M"), n_perceptrons), dpi=300)
+        # Plot this run of the cross validation (don't normally run this)
+        # mlp.fit(X_train, y_train)
+        # plt.figure(figsize=(10, 8))
+        # plt.plot(X_train[y_train == -1, 0],
+        #         X_train[y_train == -1, 1], 'bx', label="Class -1")
+        # plt.plot(X_train[y_train == 1, 0],
+        #         X_train[y_train == 1, 1], 'ko', label="Class +1")
+        # plt.xlabel(r"$x_0$")
+        # plt.ylabel(r"$x_1$")
+        # plt.title("# Perceptrons={}, P(error)={}".format(
+        #     n_perceptrons, 1-np.mean(scores['test_score'])))
+        # plt.legend()
+        # plot_model_predictions(mlp)
+        # # plt.show()
+        # plt.savefig("{}-# Perceptrons={}.png".format(
+        #     datetime.now().strftime("%Y-%d-%m-%H-%M"), n_perceptrons), dpi=300)
 
         iteration_counter = iteration_counter + 1
 
@@ -334,7 +334,7 @@ def train_and_test_final_mlp_model(n_perceptrons):
 
 
 if __name__ == '__main__':
-    # optimize_svm_hyperparameters()
-    # train_and_test_final_svm_model(0.46415, 0.1)
+    optimize_svm_hyperparameters()
+    train_and_test_final_svm_model(0.46415, 0.1)
     optimize_mlp_hyperparameters()
-    # train_and_test_final_mlp_model(59)
+    train_and_test_final_mlp_model(59)
