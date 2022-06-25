@@ -105,22 +105,6 @@ def visualize_img_components():
     ax3.set_ylabel("Green Component")
     plt.show()
 
-# cv_scores = []
-# iteration_counter = 0
-# for n_components in range(1, 2):
-#     gmm = GaussianMixture(n_components=n_components, covariance_type="full")
-#     gmm.fit(paraskier_norm)
-#     gmm.predict_proba()
-#     gmm.score()
-#     scores = cross_val_predict(estimator=gmm, X=paraskier_norm,
-#                                cv=10)
-#     print(scores)
-#     cv_scores.append([n_components, scores])
-#     print("Itararion: {}\tn_components: {}".format(iteration_counter,
-#                                                     n_components))
-#     iteration_counter = iteration_counter + 1
-
-
 def graph_log_likelihood_vs_n_components():
     '''
     For testing purposes.
