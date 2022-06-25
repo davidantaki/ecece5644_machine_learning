@@ -334,7 +334,7 @@ def train_and_test_final_mlp_model(n_perceptrons):
 
 
 if __name__ == '__main__':
-    optimize_svm_hyperparameters()
-    train_and_test_final_svm_model(0.46415, 0.1)
+    # optimize_svm_hyperparameters()
+    # train_and_test_final_svm_model(0.46415, 0.1)
     optimize_mlp_hyperparameters()
-    train_and_test_final_mlp_model(59)
+    # train_and_test_final_mlp_model(59)
