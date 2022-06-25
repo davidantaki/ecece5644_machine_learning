@@ -145,15 +145,14 @@ def graph_log_likelihood_vs_n_components():
 
 
 def get_optimal_number_of_gmm_components():
-
     # Cross Validation Params
-    K = 2
+    K = 10
     # max_num_components_to_try = 100
 
     # Partition data
     kf = KFold(n_splits=K, shuffle=True)
     # n_components_list = np.arange(1, max_num_components_to_try)
-    n_components_list = [1,2,3,4,5,6,7,8,9,10]
+    n_components_list = [1,2,3,4,5,6,7,8,9,10,20]
 
     # Allocate space for CV
     scores = []
@@ -207,11 +206,11 @@ def get_optimal_number_of_gmm_components():
     ax4.set_xlabel("# Components")
     ax4.set_title("Cross Validation Resutls: Log Likelihood vs # Components")
     ax4.plot(n_components_list, scores, marker='.')
-    ax4.plot(opt_s_i+1, scores[opt_s_i], marker='x', c='r', label="Optimal # Components")
+    ax4.plot(n_components_list[opt_s_i], scores[opt_s_i], marker='x', c='r', label="Optimal # Components")
     ax4.legend()
     plt.show()
 
-    opt_n_component = opt_s_i+1
+    opt_n_component = n_components_list[opt_s_i]
     print("Optimal Num Components: {}".format(opt_n_component))
     return opt_n_component
 
@@ -221,7 +220,7 @@ def train_final_model(n_components):
 
     # PRINT SEGMENTED IMAGE
     gmm = GaussianMixture(n_components=n_components,
-                          covariance_type="full")
+                          covariance_type="full", random_state=5)
     gmm.fit(paraskier_norm)
     pixel_labels = gmm.predict(paraskier_norm)
     labels_img = pixel_labels.reshape(
@@ -245,8 +244,8 @@ def main():
     # show_original_image()
     # visualize_img_components()
     # graph_log_likelihood_vs_n_components()
-    opt_n_components = get_optimal_number_of_gmm_components()
-    # train_final_model(2)
+    # opt_n_components = get_optimal_number_of_gmm_components()
+    train_final_model(6)
 
 
 if __name__ == '__main__':
